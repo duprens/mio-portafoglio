@@ -11,10 +11,15 @@ from datetime import datetime
 # ==========================================
 st.set_page_config(layout="wide", page_title="Monitoraggio Portafogli", page_icon="📈")
 
-# Fallback per l'email (se sei in locale non c'è login, usiamo una mail di test)
-user_email = "test@gmail.com"
-if hasattr(st, "user") and st.user.email:
-    user_email = st.user.email
+# Fallback per l'email 
+user_email = "test@gmail.com"  # Puoi mettere qui la tua email vera!
+try:
+    if hasattr(st, "user"):
+        user_email = st.user.email
+    elif hasattr(st, "experimental_user"):
+        user_email = st.experimental_user.email
+except AttributeError:
+    pass
 
 st.markdown(
     """

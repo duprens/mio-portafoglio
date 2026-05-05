@@ -13,21 +13,16 @@ st.set_page_config(layout="wide", page_title="Monitoraggio Portafogli", page_ico
 # EMAIL DELL'AMMINISTRATORE 
 ADMIN_EMAIL = "ale.palm@gmail.com"
 
-# LOGICA DI AUTENTICAZIONE (CON RETE DI SALVATAGGIO)
-user_email = None
+# LOGICA DI AUTENTICAZIONE PULITA
+user_email = "ale.palm@gmail.com" # Di base usa la tua (utile se testi l'app dal Mac)
 try:
-    if hasattr(st, "experimental_user"):
+    # Quando l'app è online, legge la VERA email dal login di Google
+    if hasattr(st, "experimental_user") and st.experimental_user.email:
         user_email = st.experimental_user.email
+    elif hasattr(st, "user") and st.user.email:
+        user_email = st.user.email
 except:
     pass
-
-# Se Streamlit non passa la mail (bug del server gratuito)
-if not user_email or user_email == "test@test.com" or user_email == "test@gmail.com":
-    st.sidebar.warning("🔑 Sblocco manuale attivato.")
-    user_email = st.sidebar.text_input("Inserisci la tua email e premi Invio:", value="")
-    if not user_email:
-        st.info("👋 Benvenuto! Inserisci la tua email nella barra di sinistra per sbloccare i tuoi portafogli.")
-        st.stop()
 
 st.markdown(
     """

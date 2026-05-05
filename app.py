@@ -10,40 +10,8 @@ from streamlit_gsheets import GSheetsConnection
 # ==========================================
 st.set_page_config(layout="wide", page_title="Monitoraggio Portafogli", page_icon="📈")
 
-# Prova a leggere l'email in automatico da Streamlit Cloud
-user_email = None
-try:
-    if hasattr(st, "experimental_user") and st.experimental_user.email:
-        user_email = st.experimental_user.email
-    elif hasattr(st, "user") and st.user.email:
-        user_email = st.user.email
-except:
-    pass
-
-# Se la lettura automatica fallisce, usa la mail inserita manualmente
-if 'manual_email' in st.session_state:
-    user_email = st.session_state.manual_email
-
-# Schermata di Login Elegante (Se non c'è nessuna email)
-if not user_email or user_email == "test@gmail.com":
-    st.markdown("<br><br><h1 style='text-align: center;'>Monitoraggio Portafogli 📈</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #888;'>Accesso Riservato allo Studio</p><br>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        with st.container(border=True):
-            st.info("🔑 Inserisci la tua email aziendale per collegarti al tuo database privato.")
-            input_mail = st.text_input("Email", placeholder="es. nome.cognome@studio.com")
-            if st.button("Accedi", type="primary", width="stretch"):
-                if "@" in input_mail:
-                    st.session_state.manual_email = input_mail.strip().lower()
-                    st.rerun()
-                else:
-                    st.error("Per favore, inserisci un'email valida.")
-    st.stop() # Ferma l'app qui finché non c'è l'email
-
 # ==========================================
-# STILI CSS (LA BIBBIA)
+# STILI CSS (SPOSTATI IN ALTO PER APPLICARLI SUBITO)
 # ==========================================
 st.markdown(
     """
@@ -66,6 +34,41 @@ st.markdown(
     span#pill-anchor { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
+
+# Prova a leggere l'email in automatico da Streamlit Cloud
+user_email = None
+try:
+    if hasattr(st, "experimental_user") and st.experimental_user.email:
+        user_email = st.experimental_user.email
+    elif hasattr(st, "user") and st.user.email:
+        user_email = st.user.email
+except:
+    pass
+
+# Se la lettura automatica fallisce, usa la mail inserita manualmente
+if 'manual_email' in st.session_state:
+    user_email = st.session_state.manual_email
+
+# Schermata di Login Elegante (Se non c'è nessuna email)
+if not user_email or user_email == "test@gmail.com":
+    st.markdown("<br><br><h1 style='text-align: center;'>Monitoraggio Portafogli 📈</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #888;'>Accesso Riservato</p><br>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        with st.container(border=True):
+            st.info("🔑 Inserisci la tua email per collegarti al tuo database privato.")
+            input_mail = st.text_input("Email", placeholder="es. nome.cognome@gmail.com")
+            if st.button("Accedi", type="primary", width="stretch"):
+                if "@" in input_mail:
+                    st.session_state.manual_email = input_mail.strip().lower()
+                    st.rerun()
+                else:
+                    st.error("Per favore, inserisci un'email valida.")
+    st.stop() # Ferma l'app qui finché non c'è l'email
+
+# ==========================================
+# (Da qui in poi lascia invariato il codice con IL ROUTER e il resto dell'app)
 
 # ==========================================
 # 2. IL ROUTER (LA RUBRICA LINK)

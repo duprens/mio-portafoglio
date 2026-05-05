@@ -481,7 +481,7 @@ else:
     # 8. AGGIUNTA NUOVO STRUMENTO MANUALE
     # ==========================================
     if not df.empty or len(portafoglio_cliente) == 0:
-        with st.expander("➕ Aggiungi Nuovo Strumento"):
+        with st.expander("➕ Nuovo Strumento"):
             c_t, c_n, c_q = st.columns(3)
             new_t, new_n, new_q = c_t.text_input("Ticker"), c_n.text_input("Strumento (Nome)"), c_q.number_input("Quantità", min_value=0.0, format="%.4f")
             c_p, c_as, c_ar, c_v = st.columns(4)

@@ -316,8 +316,15 @@ else:
         dati_c = calcola_candele(list(set(i["Ticker"] for i in portafoglio_cliente)), portafoglio_cliente, data_inizio_selezionata, tf_da_usare)
         if dati_c is not None:
             fig = go.Figure()
-            fig.add_trace(go.Candlestick(x=dati_c.index, open=dati_c['Open'], high=dati_c['High'], low=dati_c['Low'], close=dati_c['Close'], increasing_line_color='#00c853', decreasing_line_color='#ff4b4b', hovertemplate='Data: %{x|%d %b %Y}<br>Open: %{open:.2f}<br>High: %{high:.2f}<br>Low: %{low:.2f}<br>Close: %{close:.2f}<extra></extra>'))
+            fig.add_trace(go.Candlestick(
+                x=dati_c.index, open=dati_c['Open'], high=dati_c['High'], low=dati_c['Low'], close=dati_c['Close'], 
+                increasing_line_color='#00c853', decreasing_line_color='#ff4b4b', 
+                increasing_line_width=1, decreasing_line_width=1, # ECCO LO SPESSORE RIPRISTINATO
+                hovertemplate='Data: %{x|%d %b %Y}<br>Open: %{open:.2f}<br>High: %{high:.2f}<br>Low: %{low:.2f}<br>Close: %{close:.2f}<extra></extra>'
+            ))
             fig.add_trace(go.Scatter(x=dati_c.index, y=[costo_totale_pmc]*len(dati_c), mode='lines', line=dict(color='rgba(150, 150, 150, 0.5)', width=2, dash='dash'), hoverinfo='skip'))
+            fig.update_yaxes(autorange=True, fixedrange=False)
+            fig.update_xaxes(tickformat="%b %Y", ticklabelmode="period")
             fig.update_layout(yaxis_title="Controvalore (€)", xaxis_rangeslider_visible=False, margin=dict(l=20, r=20, t=30, b=20), height=400, template="plotly_dark", showlegend=False)
             st.plotly_chart(fig, width="stretch")
 
@@ -402,6 +409,7 @@ else:
             df_g["Legenda"] = df_g.apply(lambda r: allinea_legenda(r, tot_g, field), axis=1)
             with c:
                 with st.container(border=True):
-                    fig_p = go.Figure(data=[go.Pie(labels=df_g["Legenda"], values=df_g["Controvalore"], customdata=df_g.apply(lambda r: f"<b>{r[field]}</b><br>Totale: {r['Controvalore']:.2f} €<br><b>Strumenti:</b>{r['Strumenti']}", axis=1), hovertemplate="%{customdata}<extra></extra>", hole=.4, sort=False, textinfo='none', marker=dict(colors=colori_torta, line=dict(color='#1e1e1e', width=2)))]) 
-                    fig_p.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', title_text=title, template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), showlegend=True)
+                    # ECCO IL DOMAIN RIPRISTINATO
+                    fig_p = go.Figure(data=[go.Pie(labels=df_g["Legenda"], values=df_g["Controvalore"], customdata=df_g.apply(lambda r: f"<b>{r[field]}</b><br>Totale: {r['Controvalore']:.2f} €<br><b>Strumenti:</b>{r['Strumenti']}", axis=1), hovertemplate="%{customdata}<extra></extra>", hole=.4, sort=False, textinfo='none', domain=dict(x=[0, 0.5]), marker=dict(colors=colori_torta, line=dict(color='#1e1e1e', width=2)))]) 
+                    fig_p.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', title_text=title, template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)))
                     st.plotly_chart(fig_p, width="stretch")

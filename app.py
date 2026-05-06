@@ -11,7 +11,7 @@ def hash_password(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
 # ==========================================
-# 1. CONFIGURAZIONE E STILI CSS
+# 1. CONFIGURAZIONE E STILI CSS (LA BIBBIA)
 # ==========================================
 st.set_page_config(layout="wide", page_title="Monitoraggio Portafogli", page_icon="📈")
 
@@ -19,15 +19,27 @@ st.markdown(
     """
     <style>
     .stAppDeployButton {display:none;}
+    
+    /* ESORCISMO UNIVERSALE DEL ROSSO */
     :root, .stApp { --primary-color: #555555 !important; --focus-ring-color: transparent !important; }
     * { -webkit-tap-highlight-color: transparent !important; transition: none !important; }
+
+    /* Tasti Primary -> GRIGIO SCURO */
     button[kind="primary"] { background-color: #555555 !important; border-color: #555555 !important; color: white !important; }
     button[kind="primary"]:hover, button[kind="primary"]:focus, button[kind="primary"]:active { background-color: #666666 !important; border-color: #555555 !important; color: white !important; box-shadow: none !important; }
+
+    /* Tasti Secondary -> GRIGIO CHIARO SU HOVER */
     button[kind="secondary"]:focus, button[kind="secondary"]:active { border-color: rgba(130, 130, 130, 0.4) !important; box-shadow: none !important; color: white !important; }
     button[kind="secondary"]:hover { background-color: rgba(130, 130, 130, 0.25) !important; border-color: rgba(130, 130, 130, 0.4) !important; color: white !important; }
+    
+    /* Stili Sidebar Grigia */
     section[data-testid="stSidebar"] button[kind="primary"], section[data-testid="stSidebar"] button[kind="primary"]:focus, section[data-testid="stSidebar"] button[kind="primary"]:active { background-color: rgba(130, 130, 130, 0.15) !important; border-color: rgba(130, 130, 130, 0.3) !important; color: inherit !important; }
     section[data-testid="stSidebar"] button[kind="primary"]:hover { background-color: rgba(130, 130, 130, 0.25) !important; border-color: rgba(130, 130, 130, 0.4) !important; }
+
+    /* Tastini + e - Soglia Ribilanciamento */
     [data-testid="stNumberInputStepUp"]:hover, [data-testid="stNumberInputStepDown"]:hover, [data-testid="stNumberInputStepUp"]:focus, [data-testid="stNumberInputStepDown"]:focus { background-color: rgba(130, 130, 130, 0.25) !important; color: inherit !important; }
+
+    /* LA PILLOLA PERFETTA (ANTI-OCCHIALI) per D e W */
     div[data-testid="stHorizontalBlock"]:has(#pill-anchor) { gap: 0px !important; }
     div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(1), div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(2) { width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: none !important; padding: 0 !important; }
     div[data-testid="stHorizontalBlock"]:has(#pill-anchor) button { min-height: 28px !important; height: 28px !important; padding: 0 !important; margin: 0 !important; border-radius: 0 !important; font-size: 13px !important; }
@@ -58,7 +70,6 @@ if st.session_state.registrazione_in_corso:
         if new_link.startswith("https://docs.google.com/spreadsheets/"):
             try:
                 df_rubrica = conn.read(worksheet="Rubrica", ttl=0)
-                # Anti-doppione
                 if not df_rubrica.empty and 'Email' in df_rubrica.columns and st.session_state.reg_mail in df_rubrica['Email'].values:
                     df_rubrica.loc[df_rubrica['Email'] == st.session_state.reg_mail, ['Link', 'Password']] = [new_link, st.session_state.reg_pass]
                     df_aggiornata = df_rubrica
@@ -98,7 +109,6 @@ if not st.session_state.manual_email:
                     
                     try:
                         df_rubrica = conn.read(worksheet="Rubrica", ttl=0)
-                        # Cerchiamo l'utente
                         if not df_rubrica.empty and 'Email' in df_rubrica.columns:
                             utente = df_rubrica[(df_rubrica['Email'] == mail_pulita) & (df_rubrica['Password'] == h_pass)]
                             
@@ -106,23 +116,19 @@ if not st.session_state.manual_email:
                                 st.session_state.manual_email = mail_pulita
                                 st.rerun()
                             else:
-                                # Controlla se l'email esiste ma la pass è sbagliata
                                 if mail_pulita in df_rubrica['Email'].values:
                                     st.error("Password errata.")
                                 else:
-                                    # Nuovo utente: vai a registrazione
                                     st.session_state.registrazione_in_corso = True
                                     st.session_state.reg_mail = mail_pulita
                                     st.session_state.reg_pass = h_pass
                                     st.rerun()
                         else:
-                            # Se la rubrica è vuota, è il primo utente in assoluto
                             st.session_state.registrazione_in_corso = True
                             st.session_state.reg_mail = mail_pulita
                             st.session_state.reg_pass = h_pass
                             st.rerun()
                     except:
-                        # Se il foglio non esiste ancora
                         st.session_state.registrazione_in_corso = True
                         st.session_state.reg_mail = mail_pulita
                         st.session_state.reg_pass = h_pass
@@ -215,8 +221,9 @@ prezzi_aggiornati = scarica_prezzi_globali(tutti_i_tickers)
 # ==========================================
 # 6. SIDEBAR
 # ==========================================
-st.sidebar.markdown(f"<div style='font-size: 0.7rem; color: #888;'>Utente: {user_email}</div>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<div style='font-size: 0.7rem; color: #888; margin-bottom: -15px;'>Utente: {user_email}</div>", unsafe_allow_html=True)
 st.sidebar.title("Portafogli Clienti")
+st.sidebar.markdown("<hr style='margin-top: -15px; margin-bottom: 15px; border: 0; border-top: 1px solid rgba(130,130,130,0.3);'>", unsafe_allow_html=True)
 
 for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.split()[-1]):
     valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])
@@ -228,14 +235,14 @@ for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.spl
 
 st.sidebar.divider()
 with st.sidebar.expander("➕ Nuovo Cliente"):
-    nc_nome, nc_data = st.text_input("Nome Cliente"), st.date_input("Data Inizio")
-    if st.button("Crea", width="stretch", type="primary") and nc_nome:
+    nc_nome, nc_data = st.text_input("Nome Cliente"), st.date_input("Data Inizio Portafoglio")
+    if st.button("Crea Cliente", width="stretch", type="primary") and nc_nome:
         st.session_state.clienti_database[nc_nome], st.session_state.date_inizio_clienti[nc_nome] = [], nc_data.strftime("%Y-%m-%d")
         salva_db_privato(); st.session_state.cliente_selezionato = nc_nome; st.rerun()
 
 if st.session_state.cliente_selezionato in st.session_state.clienti_database:
     with st.sidebar.expander("🗑️ Elimina Cliente"):
-        if st.button("Elimina Cliente Corrente", width="stretch"):
+        if st.button("Elimina Cliente Corrente", width="stretch", type="primary"):
             del st.session_state.clienti_database[st.session_state.cliente_selezionato]
             salva_db_privato()
             rimanenti = list(st.session_state.clienti_database.keys())
@@ -251,93 +258,200 @@ else:
     ptf_c = st.session_state.clienti_database[st.session_state.cliente_selezionato]
     d_inizio = st.session_state.date_inizio_clienti.get(st.session_state.cliente_selezionato, "2024-01-01")
     
-    st.title(f"📈 {st.session_state.cliente_selezionato}")
+    col_t, col_b = st.columns([0.85, 0.15])
+    with col_t: st.title(f"📈 {st.session_state.cliente_selezionato}")
+    with col_b:
+        st.write("")
+        if st.button("Aggiorna Prezzi", width="stretch"):
+            st.cache_data.clear(); st.rerun()
     
-    costo_tot, val_tot = 0, 0
+    costo_totale_pmc, totale_controvalore = 0, 0
     ptf_el = []
     for i in ptf_c:
         px = prezzi_aggiornati.get(i["Ticker"], 0)
         c_b, cv = i["Quantità"] * i["PMC"], px * i["Quantità"]
-        costo_tot += c_b; val_tot += cv
+        costo_totale_pmc += c_b; totale_controvalore += cv
         ptf_el.append({**i, "Ultimo Prezzo": round(px, 2), "Controvalore": round(cv, 2), "Var. €": round(cv - c_b, 2), "Var. %": round(((px - i["PMC"]) / i["PMC"] * 100), 2) if i["PMC"] > 0 else 0})
     
     df = pd.DataFrame(ptf_el)
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Capitale Investito", f"{costo_tot:,.2f} €")
-    c2.metric("Controvalore Totale", f"{val_tot:,.2f} €")
-    v_e = val_tot - costo_tot
-    v_p = (v_e / costo_tot * 100) if costo_tot > 0 else 0
+    c1.metric("Capitale Investito", f"{costo_totale_pmc:,.2f} €")
+    c2.metric("Controvalore Totale", f"{totale_controvalore:,.2f} €")
+    v_e = totale_controvalore - costo_totale_pmc
+    v_p = (v_e / costo_totale_pmc * 100) if costo_totale_pmc > 0 else 0
     col_e = "#00c853" if v_e > 0 else "#ff4b4b"
-    c3.markdown(f'<div style="font-size: 14px; color: #a6a6a6;">Variazione €</div><div style="font-size: 2.25rem; font-weight: 600; color: {col_e};">{v_e:,.2f} €</div>', unsafe_allow_html=True)
-    c4.markdown(f'<div style="font-size: 14px; color: #a6a6a6;">Variazione %</div><div style="font-size: 2.25rem; font-weight: 600; color: {col_e};">{v_p:.2f}%</div>', unsafe_allow_html=True)
+    c3.markdown(f'<div style="font-size: 14px; color: #a6a6a6;">Variazione Totale (€)</div><div style="font-size: 2.25rem; font-weight: 600; color: {col_e};">{v_e:,.2f} €</div>', unsafe_allow_html=True)
+    c4.markdown(f'<div style="font-size: 14px; color: #a6a6a6;">Variazione Totale (%)</div><div style="font-size: 2.25rem; font-weight: 600; color: {col_e};">{v_p:.2f}%</div>', unsafe_allow_html=True)
 
     st.divider()
-    col_d, col_w, col_v = st.columns([1, 1, 20])
+    
+    # LA PILLOLA PERFETTA
+    col_d, col_w, col_vuota = st.columns([1, 1, 20])
     with col_d: 
         if st.button("D", type="primary" if st.session_state.timeframe_scelta == "D" else "secondary", width="stretch"): st.session_state.timeframe_scelta = "D"; st.rerun()
     with col_w: 
         if st.button("W", type="primary" if st.session_state.timeframe_scelta == "W" else "secondary", width="stretch"): st.session_state.timeframe_scelta = "W"; st.rerun()
-    st.markdown('<span id="pill-anchor"></span>', unsafe_allow_html=True)
+    with col_vuota: st.markdown('<span id="pill-anchor"></span>', unsafe_allow_html=True)
+
+    # CANDELE CON LINEA TRATTEGGIATA E HOVER PERFETTO
+    @st.cache_data(ttl=3600)
+    def calcola_candele(tickers_list, portfolio_data, start_date, tf):
+        try:
+            data = yf.download(tickers_list, start=start_date, interval=tf, progress=False)
+            df_c = pd.DataFrame(index=data.index).fillna(0)
+            df_c['Open'], df_c['High'], df_c['Low'], df_c['Close'] = 0, 0, 0, 0
+            for item in portfolio_data:
+                t, q = item["Ticker"], item["Quantità"]
+                if len(tickers_list) == 1:
+                    c_p = data['Close'].ffill().bfill()
+                    df_c['Open'] += data['Open'].replace(0, np.nan).fillna(c_p) * q
+                    df_c['High'] += data['High'].replace(0, np.nan).fillna(c_p) * q
+                    df_c['Low'] += data['Low'].replace(0, np.nan).fillna(c_p) * q
+                    df_c['Close'] += c_p * q
+                else:
+                    c_p = data['Close'][t].ffill().bfill()
+                    df_c['Open'] += data['Open'][t].replace(0, np.nan).fillna(c_p) * q
+                    df_c['High'] += data['High'][t].replace(0, np.nan).fillna(c_p) * q
+                    df_c['Low'] += data['Low'][t].replace(0, np.nan).fillna(c_p) * q
+                    df_c['Close'] += c_p * q
+            df_c.index = pd.to_datetime(df_c.index).normalize()
+            return df_c
+        except: return None
 
     if not df.empty:
-        dati_c = yf.download(list(set(i["Ticker"] for i in ptf_c)), start=d_inizio, interval="1d" if st.session_state.timeframe_scelta == "D" else "1wk", progress=False)
-        if not dati_c.empty:
-            df_c = pd.DataFrame(index=dati_c.index).fillna(0)
-            df_c['Open'], df_c['High'], df_c['Low'], df_c['Close'] = 0, 0, 0, 0
-            for i in ptf_c:
-                t, q = i["Ticker"], i["Quantità"]
-                is_single = len(set(x["Ticker"] for x in ptf_c)) == 1
-                px_c = dati_c['Close'] if is_single else dati_c['Close'][t]
-                df_c['Open'] += (dati_c['Open'] if is_single else dati_c['Open'][t]).ffill().bfill() * q
-                df_c['High'] += (dati_c['High'] if is_single else dati_c['High'][t]).ffill().bfill() * q
-                df_c['Low'] += (dati_c['Low'] if is_single else dati_c['Low'][t]).ffill().bfill() * q
-                df_c['Close'] += px_c.ffill().bfill() * q
-            fig = go.Figure(data=[go.Candlestick(x=df_c.index, open=df_c['Open'], high=df_c['High'], low=df_c['Low'], close=df_c['Close'], increasing_line_color='#00c853', decreasing_line_color='#ff4b4b', increasing_line_width=1, decreasing_line_width=1)])
-            fig.update_layout(yaxis_title="Controvalore (€)", xaxis_rangeslider_visible=False, template="plotly_dark", height=400, margin=dict(l=20, r=20, t=30, b=20))
+        tf_da_usare = "1d" if st.session_state.timeframe_scelta == "D" else "1wk"
+        dati_c = calcola_candele(list(set(i["Ticker"] for i in ptf_c)), ptf_c, d_inizio, tf_da_usare)
+        
+        if dati_c is not None:
+            fig = go.Figure()
+            fig.add_trace(go.Candlestick(
+                x=dati_c.index, open=dati_c['Open'], high=dati_c['High'], low=dati_c['Low'], close=dati_c['Close'], 
+                increasing_line_color='#00c853', decreasing_line_color='#ff4b4b', increasing_line_width=1, decreasing_line_width=1, 
+                hovertemplate='Data: %{x|%d %b %Y}<br>Open: %{open:.2f}<br>High: %{high:.2f}<br>Low: %{low:.2f}<br>Close: %{close:.2f}<extra></extra>'
+            ))
+            # LA FAMOSA LINEA TRATTEGGIATA DEL PMC
+            fig.add_trace(go.Scatter(x=dati_c.index, y=[costo_totale_pmc]*len(dati_c), mode='lines', line=dict(color='rgba(150, 150, 150, 0.5)', width=2, dash='dash'), hoverinfo='skip'))
+            fig.update_yaxes(autorange=True, fixedrange=False)
+            fig.update_xaxes(tickformat="%b %Y", ticklabelmode="period")
+            fig.update_layout(yaxis_title="Controvalore (€)", xaxis_rangeslider_visible=False, margin=dict(l=20, r=20, t=30, b=20), height=400, template="plotly_dark", showlegend=False)
             st.plotly_chart(fig, width="stretch")
 
     st.divider()
+    
+    # LA TABELLA EDITABILE PERFETTA
+    col_sp, col_in = st.columns([0.85, 0.15])
+    with col_in: 
+        soglia = st.number_input("Soglia Ribilanciamento (%)", min_value=0.0, max_value=100.0, value=10.00, step=0.50, format="%.2f")
+    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+
     if not df.empty:
-        df["Peso %"] = round((df["Controvalore"] / val_tot * 100), 2)
-        soglia = st.sidebar.number_input("Soglia Ribilanc. (%)", value=10.0, step=0.5)
+        df["Peso %"] = round((df["Controvalore"] / totale_controvalore * 100), 2) if totale_controvalore > 0 else 0
         df["Ribilanc. (Pz)"] = df.apply(lambda x: int(round((x["PMC"]*x["Quantità"] - x["Controvalore"])/prezzi_aggiornati.get(x["Ticker"], 1))) if abs(x["Var. %"]) >= soglia else 0, axis=1)
-        df_sort = df.sort_values(by="Var. %", ascending=False)
+        df_sorted = df.sort_values(by="Var. %", ascending=False).reset_index(drop=True)
+        df_sorted["Ribilanc. (Pz)"] = df_sorted["Ribilanc. (Pz)"].apply(lambda x: f"+{int(x)}" if x > 0 else (f"{int(x)}" if x < 0 else "-"))
         
-        def colora(v):
-            if isinstance(v, (int, float)): return 'color: #00c853' if v > 0 else 'color: #ff4b4b' if v < 0 else ''
-            return 'color: #00c853' if str(v).startswith('+') else 'color: #ff4b4b' if str(v).startswith('-') else ''
+        def colora(val):
+            if isinstance(val, (int, float)): return 'color: #00c853' if val > 0 else 'color: #ff4b4b' if val < 0 else ''
+            elif isinstance(val, str):
+                if val.startswith('+'): return 'color: #00c853'
+                if val.startswith('-') and len(val) > 1: return 'color: #ff4b4b'
+            return ''
 
-        cols = ["Asset", "Strumento", "PMC", "Ultimo Prezzo", "Quantità", "Ribilanc. (Pz)", "Var. €", "Var. %", "Controvalore", "Peso %"]
-        ed_df = st.data_editor(df_sort[cols].style.applymap(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format("{:.2f}", subset=["PMC", "Ultimo Prezzo", "Var. €", "Var. %", "Controvalore", "Peso %"]), width="stretch", hide_index=True, disabled=["Ultimo Prezzo", "Ribilanc. (Pz)", "Var. €", "Var. %", "Controvalore", "Peso %"])
+        colonne_view = ["Asset", "Strumento", "PMC", "Ultimo Prezzo", "Quantità", "Ribilanc. (Pz)", "Var. €", "Var. %", "Controvalore", "Peso %"]
+        df_for_editor = df_sorted[colonne_view].copy()
+
+        try:
+            styled_df = df_for_editor.style.map(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format("{:.2f}", subset=["PMC", "Ultimo Prezzo", "Var. €", "Var. %", "Controvalore", "Peso %"])
+        except AttributeError:
+            styled_df = df_for_editor.style.applymap(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format("{:.2f}", subset=["PMC", "Ultimo Prezzo", "Var. €", "Var. %", "Controvalore", "Peso %"])
+
+        edited_df = st.data_editor(styled_df, width="stretch", hide_index=True, num_rows="fixed", disabled=["Ultimo Prezzo", "Ribilanc. (Pz)", "Var. €", "Var. %", "Controvalore", "Peso %"], height=(len(df_sorted)+1)*35+10)
         
-        if st.button("💾 Salva Modifiche Tabella", type="primary"):
-            for idx, row in ed_df.iterrows():
-                t_orig = df_sort.iloc[idx]["Ticker"]
-                for item in st.session_state.clienti_database[st.session_state.cliente_selezionato]:
-                    if item["Ticker"] == t_orig: item.update({"Quantità": row["Quantità"], "PMC": row["PMC"], "Asset": row["Asset"], "Strumento": row["Strumento"]})
-            salva_db_privato(); st.rerun()
+        changed = False
+        for i in range(len(df_sorted)):
+            try:
+                new_q = float(str(edited_df.loc[i, "Quantità"]).replace(',', ''))
+                new_p = float(str(edited_df.loc[i, "PMC"]).replace(',', ''))
+                new_a = str(edited_df.loc[i, "Asset"])
+                new_s = str(edited_df.loc[i, "Strumento"])
+                
+                orig_q = float(df_sorted.loc[i, "Quantità"])
+                orig_p = float(df_sorted.loc[i, "PMC"])
+                orig_a = str(df_sorted.loc[i, "Asset"])
+                orig_s = str(df_sorted.loc[i, "Strumento"])
+                
+                if new_q != orig_q or new_p != orig_p or new_a != orig_a or new_s != orig_s:
+                    changed = True
+                    ticker = df_sorted.loc[i, "Ticker"]
+                    if new_q <= 0:
+                        st.session_state.clienti_database[st.session_state.cliente_selezionato] = [x for x in st.session_state.clienti_database[st.session_state.cliente_selezionato] if x["Ticker"] != ticker]
+                    else:
+                        for item in st.session_state.clienti_database[st.session_state.cliente_selezionato]:
+                            if item["Ticker"] == ticker: item.update({"Quantità": new_q, "PMC": new_p, "Asset": new_a, "Strumento": new_s}); break
+            except: continue
+        if changed: salva_db_privato(); st.rerun()
 
-    with st.expander("➕ Aggiungi Strumento"):
-        c1, c2, c3, c4 = st.columns(4)
-        nt, nn, nq, np = c1.text_input("Ticker (es. BTC1.DE)"), c2.text_input("Nome Strumento"), c3.number_input("Quantità", min_value=0.0, format="%.4f"), c4.number_input("PMC", min_value=0.0, format="%.2f")
-        nas, nar, nv = st.columns(3)
-        na = nas.selectbox("Asset Class", ["Azionario", "Obbligazionario", "Monetario", "Commodity", "Crypto", "Immobiliare", "Altro"])
-        nr = nar.selectbox("Area Geografica", ["USA", "Europa", "Emergenti", "Globale", "Pacifico", "Altro"])
-        nvv = nv.selectbox("Valuta", ["EUR", "USD", "Altro"])
-        if st.button("Aggiungi al Portafoglio", type="primary", width="stretch") and nt and nq > 0:
-            st.session_state.clienti_database[st.session_state.cliente_selezionato].append({"Strumento": nn if nn else nt, "Ticker": nt.upper().strip(), "Quantità": nq, "PMC": np, "Asset": na, "Area": nr, "Valuta": nvv})
-            salva_db_privato(); st.rerun()
+    # AGGIUNTA STRUMENTO
+    if not df.empty or len(ptf_c) == 0:
+        with st.expander("➕ Aggiungi Nuovo Strumento"):
+            c_t, c_n, c_q = st.columns(3)
+            new_t, new_n, new_q = c_t.text_input("Ticker"), c_n.text_input("Strumento (Nome)"), c_q.number_input("Quantità", min_value=0.0, format="%.4f")
+            c_p, c_as, c_ar, c_v = st.columns(4)
+            new_p = c_p.number_input("PMC", min_value=0.0, format="%.2f")
+            new_as = c_as.selectbox("Asset Class", ["Azionario", "Obbligazionario", "Monetario", "Commodity", "Crypto", "Bilanciato", "Immobiliare", "Altro"])
+            new_ar = c_ar.selectbox("Area Geografica", ["USA", "Europa", "Emergenti", "Globale", "Pacifico", "Altro"])
+            new_v = c_v.selectbox("Valuta", ["EUR", "USD", "Altro"])
+            
+            if st.button("Aggiungi al Portafoglio", type="primary", width="stretch") and new_t and new_q > 0:
+                st.session_state.clienti_database[st.session_state.cliente_selezionato].append({
+                    "Strumento": new_n if new_n else new_t, "Ticker": new_t.upper(),
+                    "Quantità": new_q, "PMC": new_p, "Asset": new_as, "Area": new_ar, "Valuta": new_v
+                })
+                salva_db_privato(); st.rerun()
 
     st.divider()
+
+    # I GIOIELLI DELLA CORONA: LE 3 TORTE PERFETTE
+    c_pie1, c_pie2, c_pie3 = st.columns(3)
+    colori_torta = ['#2979ff', '#00c853', '#aa00ff', '#ffcf33', '#ff4b4b', '#ff9100', '#00e5ff', '#f50057']
+
+    def allinea_legenda(row, tot, col):
+        p = (row["Controvalore"] / tot * 100) if tot > 0 else 0
+        p_str = f"{p:.1f}%"
+        if p < 10: p_str = "\u2007\u2007" + p_str
+        elif p < 100: p_str = "\u2007" + p_str
+        return f"{p_str} {row[col]}"
+
     if not df.empty:
-        c_p1, c_p2, c_p3 = st.columns(3)
-        col_t = ['#2979ff', '#00c853', '#aa00ff', '#ffcf33', '#ff4b4b', '#ff9100', '#00e5ff', '#f50057']
-        for c, f, t in zip([c_p1, c_p2, c_p3], ["Asset", "Area", "Valuta"], ["Asset Allocation", "Esposizione Geografica", "Esposizione Valutaria"]):
-            df_g = df.groupby(f).agg(Controvalore=("Controvalore", "sum"), Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x))).reset_index()
-            tot = df_g["Controvalore"].sum()
-            df_g["Label"] = df_g.apply(lambda r: f"{(r['Controvalore']/tot*100):.1f}% {r[f]}", axis=1)
-            with c:
-                with st.container(border=True):
-                    fig = go.Figure(data=[go.Pie(labels=df_g["Label"], values=df_g["Controvalore"], hole=.4, domain=dict(x=[0, 0.5]), marker=dict(colors=col_t, line=dict(color='#1e1e1e', width=2)), textinfo='none', sort=False)])
-                    fig.update_layout(title_text=t, template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), legend=dict(y=0.5, x=0.52))
-                    st.plotly_chart(fig, width="stretch")
+        # Torta 1: Asset
+        df_asset = df.groupby("Asset").agg(Controvalore=("Controvalore", "sum"), Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x))).reset_index().sort_values(by="Controvalore", ascending=False)
+        tot_asset = df_asset["Controvalore"].sum()
+        df_asset["Legenda"] = df_asset.apply(lambda r: allinea_legenda(r, tot_asset, "Asset"), axis=1)
+
+        with c_pie1:
+            with st.container(border=True):
+                fig_asset = go.Figure(data=[go.Pie(labels=df_asset["Legenda"], values=df_asset["Controvalore"], customdata=df_asset.apply(lambda r: f"<b>{r['Asset']}</b><br>Totale: {r['Controvalore']:.2f} €<br><b>Strumenti:</b>{r['Strumenti']}", axis=1), hovertemplate="%{customdata}<extra></extra>", hole=.4, sort=False, textinfo='none', domain=dict(x=[0, 0.5]), marker=dict(colors=colori_torta, line=dict(color='#1e1e1e', width=2)))]) 
+                fig_asset.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', title_text="Asset Allocation", template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)))
+                st.plotly_chart(fig_asset, width="stretch")
+
+        # Torta 2: Area
+        df_area = df.groupby("Area").agg(Controvalore=("Controvalore", "sum"), Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x))).reset_index().sort_values(by="Controvalore", ascending=False)
+        tot_area = df_area["Controvalore"].sum()
+        df_area["Legenda"] = df_area.apply(lambda r: allinea_legenda(r, tot_area, "Area"), axis=1)
+
+        with c_pie2:
+            with st.container(border=True):
+                fig_area = go.Figure(data=[go.Pie(labels=df_area["Legenda"], values=df_area["Controvalore"], customdata=df_area.apply(lambda r: f"<b>{r['Area']}</b><br>Totale: {r['Controvalore']:.2f} €<br><b>Strumenti:</b>{r['Strumenti']}", axis=1), hovertemplate="%{customdata}<extra></extra>", hole=.4, sort=False, textinfo='none', domain=dict(x=[0, 0.5]), marker=dict(colors=colori_torta, line=dict(color='#1e1e1e', width=2)))]) 
+                fig_area.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', title_text="Esposizione Geografica", template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)))
+                st.plotly_chart(fig_area, width="stretch")
+
+        # Torta 3: Valuta
+        df_val = df.groupby("Valuta").agg(Controvalore=("Controvalore", "sum"), Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x))).reset_index().sort_values(by="Controvalore", ascending=False)
+        tot_val = df_val["Controvalore"].sum()
+        df_val["Legenda"] = df_val.apply(lambda r: allinea_legenda(r, tot_val, "Valuta"), axis=1)
+
+        with c_pie3:
+            with st.container(border=True):
+                fig_val = go.Figure(data=[go.Pie(labels=df_val["Legenda"], values=df_val["Controvalore"], customdata=df_val.apply(lambda r: f"<b>{r['Valuta']}</b><br>Totale: {r['Controvalore']:.2f} €<br><b>Strumenti:</b>{r['Strumenti']}", axis=1), hovertemplate="%{customdata}<extra></extra>", hole=.4, sort=False, textinfo='none', domain=dict(x=[0, 0.5]), marker=dict(colors=colori_torta, line=dict(color='#1e1e1e', width=2)))]) 
+                fig_val.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', title_text="Esposizione Valutaria", template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)))
+                st.plotly_chart(fig_val, width="stretch")

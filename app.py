@@ -6,9 +6,7 @@ import hashlib
 import plotly.graph_objects as go
 from streamlit_gsheets import GSheetsConnection
 
-# ==========================================
-# FUNZIONI DI SERVIZIO
-# ==========================================
+# Funzione per cifrare la password (Hashing)
 def hash_password(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
@@ -40,12 +38,49 @@ st.markdown(
     """, unsafe_allow_html=True)
 
 conn = st.connection("gsheets", type=GSheetsConnection)
-user_email = st.session_state.get('manual_email', None)
+
+# --- GESTIONE STATI DI ACCESSO ---
+if 'manual_email' not in st.session_state:
+    st.session_state.manual_email = None
+if 'registrazione_in_corso' not in st.session_state:
+    st.session_state.registrazione_in_corso = False
 
 # ==========================================
-# 2. LOGIN E REGISTRAZIONE (BUNKER)
+# 2. LOGICA DI REGISTRAZIONE (PRIMA DEL LOGIN)
 # ==========================================
-if not user_email:
+if st.session_state.registrazione_in_corso:
+    st.title("Benvenuto 📈")
+    st.markdown(f"Ciao **{st.session_state.reg_mail}**! Prima configurazione del tuo database.")
+    st.info("💡 Incolla il link del tuo Foglio Google privato (ricorda di condividerlo con il bot come Editor).")
+    
+    new_link = st.text_input("Link Foglio Google:")
+    if st.button("Collega Database", type="primary"):
+        if new_link.startswith("https://docs.google.com/spreadsheets/"):
+            try:
+                df_rubrica = conn.read(worksheet="Rubrica", ttl=0)
+                # Anti-doppione
+                if not df_rubrica.empty and 'Email' in df_rubrica.columns and st.session_state.reg_mail in df_rubrica['Email'].values:
+                    df_rubrica.loc[df_rubrica['Email'] == st.session_state.reg_mail, ['Link', 'Password']] = [new_link, st.session_state.reg_pass]
+                    df_aggiornata = df_rubrica
+                else:
+                    nuova_riga = pd.DataFrame([{"Email": st.session_state.reg_mail, "Link": new_link, "Password": st.session_state.reg_pass}])
+                    df_aggiornata = pd.concat([df_rubrica, nuova_riga], ignore_index=True)
+                
+                conn.update(worksheet="Rubrica", data=df_aggiornata)
+                st.session_state.manual_email = st.session_state.reg_mail
+                st.session_state.registrazione_in_corso = False
+                st.cache_data.clear()
+                st.rerun()
+            except Exception as e:
+                st.error(f"Errore durante il salvataggio: {e}")
+        else:
+            st.error("Link non valido. Assicurati che sia un link di Google Sheets.")
+    st.stop()
+
+# ==========================================
+# 3. SCHERMATA DI LOGIN
+# ==========================================
+if not st.session_state.manual_email:
     st.markdown("<br><br><h1 style='text-align: center;'>Monitoraggio Portafogli 📈</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #888;'>Accesso Riservato</p><br>", unsafe_allow_html=True)
     
@@ -57,55 +92,47 @@ if not user_email:
             input_pass = st.text_input("Password", type="password")
             
             if st.button("Accedi", type="primary", width="stretch"):
-                if "@" in input_mail and input_pass:
+                if input_mail and input_pass:
                     mail_pulita = input_mail.strip().lower()
                     h_pass = hash_password(input_pass)
                     
                     try:
                         df_rubrica = conn.read(worksheet="Rubrica", ttl=0)
-                        utente = df_rubrica[(df_rubrica['Email'] == mail_pulita) & (df_rubrica['Password'] == h_pass)]
-                        
-                        if not utente.empty:
-                            st.session_state.manual_email = mail_pulita
-                            st.rerun()
-                        else:
-                            check_esistenza = df_rubrica[df_rubrica['Email'] == mail_pulita]
-                            if not check_esistenza.empty:
-                                st.error("Password errata.")
-                            else:
-                                st.session_state.registrazione_in_corso = True
-                                st.session_state.reg_mail = mail_pulita
-                                st.session_state.reg_pass = h_pass
+                        # Cerchiamo l'utente
+                        if not df_rubrica.empty and 'Email' in df_rubrica.columns:
+                            utente = df_rubrica[(df_rubrica['Email'] == mail_pulita) & (df_rubrica['Password'] == h_pass)]
+                            
+                            if not utente.empty:
+                                st.session_state.manual_email = mail_pulita
                                 st.rerun()
+                            else:
+                                # Controlla se l'email esiste ma la pass è sbagliata
+                                if mail_pulita in df_rubrica['Email'].values:
+                                    st.error("Password errata.")
+                                else:
+                                    # Nuovo utente: vai a registrazione
+                                    st.session_state.registrazione_in_corso = True
+                                    st.session_state.reg_mail = mail_pulita
+                                    st.session_state.reg_pass = h_pass
+                                    st.rerun()
+                        else:
+                            # Se la rubrica è vuota, è il primo utente in assoluto
+                            st.session_state.registrazione_in_corso = True
+                            st.session_state.reg_mail = mail_pulita
+                            st.session_state.reg_pass = h_pass
+                            st.rerun()
                     except:
+                        # Se il foglio non esiste ancora
                         st.session_state.registrazione_in_corso = True
                         st.session_state.reg_mail = mail_pulita
                         st.session_state.reg_pass = h_pass
                         st.rerun()
+                else:
+                    st.error("Inserisci Email e Password.")
     st.stop()
 
-if st.session_state.get('registrazione_in_corso'):
-    st.title("Benvenuto 📈")
-    st.markdown(f"Ciao **{st.session_state.reg_mail}**! Prima configurazione.")
-    st.info("💡 Incolla il link del tuo Foglio Google privato (ricorda di condividerlo con il bot come Editor).")
-    new_link = st.text_input("Link Foglio Google:")
-    if st.button("Collega Database", type="primary"):
-        if new_link.startswith("https://docs.google.com/spreadsheets/"):
-            try:
-                df_rubrica = conn.read(worksheet="Rubrica", ttl=0)
-                if 'Email' in df_rubrica.columns and st.session_state.reg_mail in df_rubrica['Email'].values:
-                    df_rubrica.loc[df_rubrica['Email'] == st.session_state.reg_mail, ['Link', 'Password']] = [new_link, st.session_state.reg_pass]
-                    df_aggiornata = df_rubrica
-                else:
-                    nuova_riga = pd.DataFrame([{"Email": st.session_state.reg_mail, "Link": new_link, "Password": st.session_state.reg_pass}])
-                    df_aggiornata = pd.concat([df_rubrica, nuova_riga], ignore_index=True)
-                conn.update(worksheet="Rubrica", data=df_aggiornata)
-                st.session_state.manual_email = st.session_state.reg_mail
-                st.session_state.registrazione_in_corso = False
-                st.cache_data.clear()
-                st.rerun()
-            except: pass
-    st.stop()
+# --- DA QUI IN POI L'UTENTE È LOGGATO ---
+user_email = st.session_state.manual_email
 
 @st.cache_data(ttl=5)
 def get_user_link(email):
@@ -119,7 +146,7 @@ def get_user_link(email):
 user_sheet_link = get_user_link(user_email)
 
 # ==========================================
-# 3. GESTIONE DATABASE PRIVATO
+# 4. GESTIONE DATABASE PRIVATO
 # ==========================================
 def salva_db_privato():
     rows = []
@@ -164,7 +191,7 @@ if 'timeframe_scelta' not in st.session_state:
     st.session_state.timeframe_scelta = "D"
 
 # ==========================================
-# 4. MOTORE PREZZI
+# 5. MOTORE PREZZI
 # ==========================================
 tutti_i_tickers = set()
 for pt in st.session_state.clienti_database.values():
@@ -186,7 +213,7 @@ def scarica_prezzi_globali(tickers):
 prezzi_aggiornati = scarica_prezzi_globali(tutti_i_tickers)
 
 # ==========================================
-# 5. SIDEBAR
+# 6. SIDEBAR
 # ==========================================
 st.sidebar.markdown(f"<div style='font-size: 0.7rem; color: #888;'>Utente: {user_email}</div>", unsafe_allow_html=True)
 st.sidebar.title("Portafogli Clienti")
@@ -216,7 +243,7 @@ if st.session_state.cliente_selezionato in st.session_state.clienti_database:
             st.rerun()
 
 # ==========================================
-# 6. DASHBOARD PRINCIPALE
+# 7. DASHBOARD PRINCIPALE
 # ==========================================
 if not st.session_state.cliente_selezionato:
     st.info("👋 Benvenuto! Aggiungi il tuo primo cliente dalla barra laterale per iniziare.")

@@ -10,7 +10,7 @@ from streamlit_gsheets import GSheetsConnection
 # ==========================================
 st.set_page_config(layout="wide", page_title="Monitoraggio Portafogli", page_icon="📈")
 
-# Prova a leggere l'email IN MODO SICURO da Streamlit Cloud
+# Estrazione sicura dell'email direttamente dal sistema di Login di Google/Streamlit
 user_email = None
 try:
     if hasattr(st, "experimental_user") and st.experimental_user.email:
@@ -20,7 +20,7 @@ try:
 except:
     pass
 
-# Schermata di blocco se l'accesso Google fallisce (nessun inserimento manuale permesso!)
+# Schermata di blocco totale (Nessun inserimento manuale permesso)
 if not user_email or user_email == "test@gmail.com":
     st.markdown("<br><br><h1 style='text-align: center;'>Monitoraggio Portafogli 📈</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #888;'>Accesso Riservato</p><br>", unsafe_allow_html=True)
@@ -29,9 +29,9 @@ if not user_email or user_email == "test@gmail.com":
     with col2:
         with st.container(border=True):
             st.error("🔒 **Accesso non verificato.**")
-            st.write("Il sistema non è riuscito a validare il tuo account Google in modo sicuro.")
-            st.write("Per favore, ricarica la pagina o assicurati di aver eseguito il login autorizzato tramite Streamlit.")
-    st.stop() # Ferma l'app qui. Nessuno passa senza la VERA email di Google.
+            st.write("Il sistema non riconosce la tua identità.")
+            st.write("Per accedere al database, devi aprire questa pagina usando un account Google esplicitamente autorizzato dall'Amministratore dello Studio.")
+    st.stop() # Il codice si ferma qua. Il database è irraggiungibile.
 
 # ==========================================
 # STILI CSS (SPOSTATI IN ALTO PER APPLICARLI SUBITO)

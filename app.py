@@ -6,7 +6,9 @@ import hashlib
 import plotly.graph_objects as go
 from streamlit_gsheets import GSheetsConnection
 
-# Funzione per cifrare la password (Hashing)
+# ==========================================
+# FUNZIONI DI SERVIZIO
+# ==========================================
 def hash_password(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
@@ -41,7 +43,7 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 user_email = st.session_state.get('manual_email', None)
 
 # ==========================================
-# 2. LOGIN E REGISTRAZIONE
+# 2. LOGIN E REGISTRAZIONE (BUNKER)
 # ==========================================
 if not user_email:
     st.markdown("<br><br><h1 style='text-align: center;'>Monitoraggio Portafogli 📈</h1>", unsafe_allow_html=True)
@@ -143,7 +145,7 @@ def carica_db_privato():
             d_db[cliente] = str(df_c['Data_Inizio'].iloc[0])
             ptf = []
             for _, row in df_c.iterrows():
-                if pd.isna(row['Ticker']): continue
+                if pd.isna(row['Ticker']) or str(row['Ticker']).strip() == "": continue
                 ptf.append({"Strumento": str(row['Strumento']), "Ticker": str(row['Ticker']), "Quantità": float(row['Quantità']), "PMC": float(row['PMC']), "Asset": str(row['Asset']), "Area": str(row['Area']), "Valuta": str(row['Valuta'])})
             c_db[cliente] = ptf
         return c_db, d_db
@@ -204,10 +206,21 @@ with st.sidebar.expander("➕ Nuovo Cliente"):
         st.session_state.clienti_database[nc_nome], st.session_state.date_inizio_clienti[nc_nome] = [], nc_data.strftime("%Y-%m-%d")
         salva_db_privato(); st.session_state.cliente_selezionato = nc_nome; st.rerun()
 
+if st.session_state.cliente_selezionato in st.session_state.clienti_database:
+    with st.sidebar.expander("🗑️ Elimina Cliente"):
+        if st.button("Elimina Cliente Corrente", width="stretch"):
+            del st.session_state.clienti_database[st.session_state.cliente_selezionato]
+            salva_db_privato()
+            rimanenti = list(st.session_state.clienti_database.keys())
+            st.session_state.cliente_selezionato = rimanenti[0] if rimanenti else ""
+            st.rerun()
+
 # ==========================================
-# 6. DASHBOARD
+# 6. DASHBOARD PRINCIPALE
 # ==========================================
-if st.session_state.cliente_selezionato:
+if not st.session_state.cliente_selezionato:
+    st.info("👋 Benvenuto! Aggiungi il tuo primo cliente dalla barra laterale per iniziare.")
+else:
     ptf_c = st.session_state.clienti_database[st.session_state.cliente_selezionato]
     d_inizio = st.session_state.date_inizio_clienti.get(st.session_state.cliente_selezionato, "2024-01-01")
     
@@ -246,10 +259,11 @@ if st.session_state.cliente_selezionato:
             df_c['Open'], df_c['High'], df_c['Low'], df_c['Close'] = 0, 0, 0, 0
             for i in ptf_c:
                 t, q = i["Ticker"], i["Quantità"]
-                px_c = dati_c['Close'] if len(set(x["Ticker"] for x in ptf_c)) == 1 else dati_c['Close'][t]
-                df_c['Open'] += (dati_c['Open'] if len(set(x["Ticker"] for x in ptf_c)) == 1 else dati_c['Open'][t]).ffill().bfill() * q
-                df_c['High'] += (dati_c['High'] if len(set(x["Ticker"] for x in ptf_c)) == 1 else dati_c['High'][t]).ffill().bfill() * q
-                df_c['Low'] += (dati_c['Low'] if len(set(x["Ticker"] for x in ptf_c)) == 1 else dati_c['Low'][t]).ffill().bfill() * q
+                is_single = len(set(x["Ticker"] for x in ptf_c)) == 1
+                px_c = dati_c['Close'] if is_single else dati_c['Close'][t]
+                df_c['Open'] += (dati_c['Open'] if is_single else dati_c['Open'][t]).ffill().bfill() * q
+                df_c['High'] += (dati_c['High'] if is_single else dati_c['High'][t]).ffill().bfill() * q
+                df_c['Low'] += (dati_c['Low'] if is_single else dati_c['Low'][t]).ffill().bfill() * q
                 df_c['Close'] += px_c.ffill().bfill() * q
             fig = go.Figure(data=[go.Candlestick(x=df_c.index, open=df_c['Open'], high=df_c['High'], low=df_c['Low'], close=df_c['Close'], increasing_line_color='#00c853', decreasing_line_color='#ff4b4b', increasing_line_width=1, decreasing_line_width=1)])
             fig.update_layout(yaxis_title="Controvalore (€)", xaxis_rangeslider_visible=False, template="plotly_dark", height=400, margin=dict(l=20, r=20, t=30, b=20))
@@ -269,8 +283,7 @@ if st.session_state.cliente_selezionato:
         cols = ["Asset", "Strumento", "PMC", "Ultimo Prezzo", "Quantità", "Ribilanc. (Pz)", "Var. €", "Var. %", "Controvalore", "Peso %"]
         ed_df = st.data_editor(df_sort[cols].style.applymap(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format("{:.2f}", subset=["PMC", "Ultimo Prezzo", "Var. €", "Var. %", "Controvalore", "Peso %"]), width="stretch", hide_index=True, disabled=["Ultimo Prezzo", "Ribilanc. (Pz)", "Var. €", "Var. %", "Controvalore", "Peso %"])
         
-        # Logica modifica rapida
-        if st.button("Salva Modifiche Tabella"):
+        if st.button("💾 Salva Modifiche Tabella", type="primary"):
             for idx, row in ed_df.iterrows():
                 t_orig = df_sort.iloc[idx]["Ticker"]
                 for item in st.session_state.clienti_database[st.session_state.cliente_selezionato]:
@@ -279,24 +292,25 @@ if st.session_state.cliente_selezionato:
 
     with st.expander("➕ Aggiungi Strumento"):
         c1, c2, c3, c4 = st.columns(4)
-        nt, nn, nq, np = c1.text_input("Ticker"), c2.text_input("Nome"), c3.number_input("Quantità", min_value=0.0), c4.number_input("PMC", min_value=0.0)
+        nt, nn, nq, np = c1.text_input("Ticker (es. BTC1.DE)"), c2.text_input("Nome Strumento"), c3.number_input("Quantità", min_value=0.0, format="%.4f"), c4.number_input("PMC", min_value=0.0, format="%.2f")
         nas, nar, nv = st.columns(3)
-        na = nas.selectbox("Asset", ["Azionario", "Obbligazionario", "Monetario", "Commodity", "Crypto", "Altro"])
-        nr = nar.selectbox("Area", ["USA", "Europa", "Emergenti", "Globale", "Altro"])
+        na = nas.selectbox("Asset Class", ["Azionario", "Obbligazionario", "Monetario", "Commodity", "Crypto", "Immobiliare", "Altro"])
+        nr = nar.selectbox("Area Geografica", ["USA", "Europa", "Emergenti", "Globale", "Pacifico", "Altro"])
         nvv = nv.selectbox("Valuta", ["EUR", "USD", "Altro"])
-        if st.button("Aggiungi", type="primary") and nt and nq > 0:
-            st.session_state.clienti_database[st.session_state.cliente_selezionato].append({"Strumento": nn if nn else nt, "Ticker": nt.upper(), "Quantità": nq, "PMC": np, "Asset": na, "Area": nr, "Valuta": nvv})
+        if st.button("Aggiungi al Portafoglio", type="primary", width="stretch") and nt and nq > 0:
+            st.session_state.clienti_database[st.session_state.cliente_selezionato].append({"Strumento": nn if nn else nt, "Ticker": nt.upper().strip(), "Quantità": nq, "PMC": np, "Asset": na, "Area": nr, "Valuta": nvv})
             salva_db_privato(); st.rerun()
 
     st.divider()
     if not df.empty:
         c_p1, c_p2, c_p3 = st.columns(3)
-        col_t = ['#2979ff', '#00c853', '#aa00ff', '#ffcf33', '#ff4b4b']
+        col_t = ['#2979ff', '#00c853', '#aa00ff', '#ffcf33', '#ff4b4b', '#ff9100', '#00e5ff', '#f50057']
         for c, f, t in zip([c_p1, c_p2, c_p3], ["Asset", "Area", "Valuta"], ["Asset Allocation", "Esposizione Geografica", "Esposizione Valutaria"]):
             df_g = df.groupby(f).agg(Controvalore=("Controvalore", "sum"), Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x))).reset_index()
             tot = df_g["Controvalore"].sum()
+            df_g["Label"] = df_g.apply(lambda r: f"{(r['Controvalore']/tot*100):.1f}% {r[f]}", axis=1)
             with c:
                 with st.container(border=True):
-                    fig = go.Figure(data=[go.Pie(labels=df_g[f].apply(lambda x: f"{(df_g[df_g[f]==x]['Controvalore'].iloc[0]/tot*100):.1f}% {x}"), values=df_g["Controvalore"], hole=.4, domain=dict(x=[0, 0.5]), marker=dict(colors=col_t))])
+                    fig = go.Figure(data=[go.Pie(labels=df_g["Label"], values=df_g["Controvalore"], hole=.4, domain=dict(x=[0, 0.5]), marker=dict(colors=col_t, line=dict(color='#1e1e1e', width=2)), textinfo='none', sort=False)])
                     fig.update_layout(title_text=t, template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), legend=dict(y=0.5, x=0.52))
                     st.plotly_chart(fig, width="stretch")

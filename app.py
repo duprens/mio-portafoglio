@@ -6,7 +6,7 @@ import hashlib
 import plotly.graph_objects as go
 from streamlit_gsheets import GSheetsConnection
 
-# Funzione per cifrare la password (Hashing)
+# Funzione per cifrare la password (Hashing "Stile Blockchain")
 def hash_password(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
@@ -28,7 +28,7 @@ st.markdown(
     button[kind="primary"] { background-color: #555555 !important; border-color: #555555 !important; color: white !important; }
     button[kind="primary"]:hover, button[kind="primary"]:focus, button[kind="primary"]:active { background-color: #666666 !important; border-color: #555555 !important; color: white !important; box-shadow: none !important; }
 
-    /* Tasti Secondary -> GRIGIO CHIARO SU HOVER */
+    /* Tasti Secondary -> GRIGIO STANDARD/CHIARO SU HOVER */
     button[kind="secondary"]:focus, button[kind="secondary"]:active { border-color: rgba(130, 130, 130, 0.4) !important; box-shadow: none !important; color: white !important; }
     button[kind="secondary"]:hover { background-color: rgba(130, 130, 130, 0.25) !important; border-color: rgba(130, 130, 130, 0.4) !important; color: white !important; }
     
@@ -39,7 +39,7 @@ st.markdown(
     /* Tastini + e - Soglia Ribilanciamento */
     [data-testid="stNumberInputStepUp"]:hover, [data-testid="stNumberInputStepDown"]:hover, [data-testid="stNumberInputStepUp"]:focus, [data-testid="stNumberInputStepDown"]:focus { background-color: rgba(130, 130, 130, 0.25) !important; color: inherit !important; }
 
-    /* LA PILLOLA PERFETTA (ANTI-OCCHIALI) per D e W */
+    /* LA PILLOLA PERFETTA per D e W */
     div[data-testid="stHorizontalBlock"]:has(#pill-anchor) { gap: 0px !important; }
     div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(1), div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(2) { width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: none !important; padding: 0 !important; }
     div[data-testid="stHorizontalBlock"]:has(#pill-anchor) button { min-height: 28px !important; height: 28px !important; padding: 0 !important; margin: 0 !important; border-radius: 0 !important; font-size: 13px !important; }
@@ -52,10 +52,8 @@ st.markdown(
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 # --- GESTIONE STATI DI ACCESSO ---
-if 'manual_email' not in st.session_state:
-    st.session_state.manual_email = None
-if 'registrazione_in_corso' not in st.session_state:
-    st.session_state.registrazione_in_corso = False
+if 'manual_email' not in st.session_state: st.session_state.manual_email = None
+if 'registrazione_in_corso' not in st.session_state: st.session_state.registrazione_in_corso = False
 
 # ==========================================
 # 2. LOGICA DI REGISTRAZIONE (PRIMA DEL LOGIN)
@@ -89,7 +87,7 @@ if st.session_state.registrazione_in_corso:
     st.stop()
 
 # ==========================================
-# 3. SCHERMATA DI LOGIN
+# 3. SCHERMATA DI LOGIN BLINDATA
 # ==========================================
 if not st.session_state.manual_email:
     st.markdown("<br><br><h1 style='text-align: center;'>Monitoraggio Portafogli 📈</h1>", unsafe_allow_html=True)
@@ -240,9 +238,11 @@ with st.sidebar.expander("➕ Nuovo Cliente"):
         st.session_state.clienti_database[nc_nome], st.session_state.date_inizio_clienti[nc_nome] = [], nc_data.strftime("%Y-%m-%d")
         salva_db_privato(); st.session_state.cliente_selezionato = nc_nome; st.rerun()
 
+# RIPRISTINATA L'ELIMINAZIONE CON CONFERMA E NOME CLIENTE
 if st.session_state.cliente_selezionato in st.session_state.clienti_database:
     with st.sidebar.expander("🗑️ Elimina Cliente"):
-        if st.button("Elimina Cliente Corrente", width="stretch", type="primary"):
+        st.markdown(f"Rimuovere **{st.session_state.cliente_selezionato}**?")
+        if st.button("Elimina", width="stretch", type="primary"):
             del st.session_state.clienti_database[st.session_state.cliente_selezionato]
             salva_db_privato()
             rimanenti = list(st.session_state.clienti_database.keys())
@@ -293,7 +293,6 @@ else:
         if st.button("W", type="primary" if st.session_state.timeframe_scelta == "W" else "secondary", width="stretch"): st.session_state.timeframe_scelta = "W"; st.rerun()
     with col_vuota: st.markdown('<span id="pill-anchor"></span>', unsafe_allow_html=True)
 
-    # CANDELE CON LINEA TRATTEGGIATA E HOVER PERFETTO
     @st.cache_data(ttl=3600)
     def calcola_candele(tickers_list, portfolio_data, start_date, tf):
         try:
@@ -329,7 +328,6 @@ else:
                 increasing_line_color='#00c853', decreasing_line_color='#ff4b4b', increasing_line_width=1, decreasing_line_width=1, 
                 hovertemplate='Data: %{x|%d %b %Y}<br>Open: %{open:.2f}<br>High: %{high:.2f}<br>Low: %{low:.2f}<br>Close: %{close:.2f}<extra></extra>'
             ))
-            # LA FAMOSA LINEA TRATTEGGIATA DEL PMC
             fig.add_trace(go.Scatter(x=dati_c.index, y=[costo_totale_pmc]*len(dati_c), mode='lines', line=dict(color='rgba(150, 150, 150, 0.5)', width=2, dash='dash'), hoverinfo='skip'))
             fig.update_yaxes(autorange=True, fixedrange=False)
             fig.update_xaxes(tickformat="%b %Y", ticklabelmode="period")
@@ -338,7 +336,6 @@ else:
 
     st.divider()
     
-    # LA TABELLA EDITABILE PERFETTA
     col_sp, col_in = st.columns([0.85, 0.15])
     with col_in: 
         soglia = st.number_input("Soglia Ribilanciamento (%)", min_value=0.0, max_value=100.0, value=10.00, step=0.50, format="%.2f")
@@ -391,9 +388,9 @@ else:
             except: continue
         if changed: salva_db_privato(); st.rerun()
 
-    # AGGIUNTA STRUMENTO
+    # TITOLO MODIFICATO: "➕ Nuovo Strumento"
     if not df.empty or len(ptf_c) == 0:
-        with st.expander("➕ Aggiungi Nuovo Strumento"):
+        with st.expander("➕ Nuovo Strumento"):
             c_t, c_n, c_q = st.columns(3)
             new_t, new_n, new_q = c_t.text_input("Ticker"), c_n.text_input("Strumento (Nome)"), c_q.number_input("Quantità", min_value=0.0, format="%.4f")
             c_p, c_as, c_ar, c_v = st.columns(4)
@@ -402,7 +399,8 @@ else:
             new_ar = c_ar.selectbox("Area Geografica", ["USA", "Europa", "Emergenti", "Globale", "Pacifico", "Altro"])
             new_v = c_v.selectbox("Valuta", ["EUR", "USD", "Altro"])
             
-            if st.button("Aggiungi al Portafoglio", type="primary", width="stretch") and new_t and new_q > 0:
+            # TASTO MODIFICATO: type="secondary" per il grigio neutro
+            if st.button("Aggiungi al Portafoglio", type="secondary", width="stretch") and new_t and new_q > 0:
                 st.session_state.clienti_database[st.session_state.cliente_selezionato].append({
                     "Strumento": new_n if new_n else new_t, "Ticker": new_t.upper(),
                     "Quantità": new_q, "PMC": new_p, "Asset": new_as, "Area": new_ar, "Valuta": new_v
@@ -411,7 +409,6 @@ else:
 
     st.divider()
 
-    # I GIOIELLI DELLA CORONA: LE 3 TORTE PERFETTE
     c_pie1, c_pie2, c_pie3 = st.columns(3)
     colori_torta = ['#2979ff', '#00c853', '#aa00ff', '#ffcf33', '#ff4b4b', '#ff9100', '#00e5ff', '#f50057']
 
@@ -423,7 +420,6 @@ else:
         return f"{p_str} {row[col]}"
 
     if not df.empty:
-        # Torta 1: Asset
         df_asset = df.groupby("Asset").agg(Controvalore=("Controvalore", "sum"), Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x))).reset_index().sort_values(by="Controvalore", ascending=False)
         tot_asset = df_asset["Controvalore"].sum()
         df_asset["Legenda"] = df_asset.apply(lambda r: allinea_legenda(r, tot_asset, "Asset"), axis=1)
@@ -434,7 +430,6 @@ else:
                 fig_asset.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', title_text="Asset Allocation", template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)))
                 st.plotly_chart(fig_asset, width="stretch")
 
-        # Torta 2: Area
         df_area = df.groupby("Area").agg(Controvalore=("Controvalore", "sum"), Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x))).reset_index().sort_values(by="Controvalore", ascending=False)
         tot_area = df_area["Controvalore"].sum()
         df_area["Legenda"] = df_area.apply(lambda r: allinea_legenda(r, tot_area, "Area"), axis=1)
@@ -445,7 +440,6 @@ else:
                 fig_area.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', title_text="Esposizione Geografica", template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)))
                 st.plotly_chart(fig_area, width="stretch")
 
-        # Torta 3: Valuta
         df_val = df.groupby("Valuta").agg(Controvalore=("Controvalore", "sum"), Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x))).reset_index().sort_values(by="Controvalore", ascending=False)
         tot_val = df_val["Controvalore"].sum()
         df_val["Legenda"] = df_val.apply(lambda r: allinea_legenda(r, tot_val, "Valuta"), axis=1)

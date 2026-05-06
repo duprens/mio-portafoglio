@@ -6,36 +6,10 @@ import plotly.graph_objects as go
 from streamlit_gsheets import GSheetsConnection
 
 # ==========================================
-# 1. CONFIGURAZIONE E ACCESSO (BLINDATO)
+# 1. CONFIGURAZIONE E ACCESSO
 # ==========================================
 st.set_page_config(layout="wide", page_title="Monitoraggio Portafogli", page_icon="📈")
 
-# Estrazione sicura dell'email direttamente dal sistema di Login di Google/Streamlit
-user_email = None
-try:
-    if hasattr(st, "experimental_user") and st.experimental_user.email:
-        user_email = st.experimental_user.email
-    elif hasattr(st, "user") and st.user.email:
-        user_email = st.user.email
-except:
-    pass
-
-# Schermata di blocco totale (Nessun inserimento manuale permesso)
-if not user_email or user_email == "test@gmail.com":
-    st.markdown("<br><br><h1 style='text-align: center;'>Monitoraggio Portafogli 📈</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #888;'>Accesso Riservato</p><br>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        with st.container(border=True):
-            st.error("🔒 **Accesso non verificato.**")
-            st.write("Il sistema non riconosce la tua identità.")
-            st.write("Per accedere al database, devi aprire questa pagina usando un account Google esplicitamente autorizzato dall'Amministratore dello Studio.")
-    st.stop() # Il codice si ferma qua. Il database è irraggiungibile.
-
-# ==========================================
-# STILI CSS (SPOSTATI IN ALTO PER APPLICARLI SUBITO)
-# ==========================================
 st.markdown(
     """
     <style>
@@ -58,63 +32,60 @@ st.markdown(
     </style>
     """, unsafe_allow_html=True)
 
-# Prova a leggere l'email in automatico da Streamlit Cloud
-user_email = None
-try:
-    if hasattr(st, "experimental_user") and st.experimental_user.email:
-        user_email = st.experimental_user.email
-    elif hasattr(st, "user") and st.user.email:
-        user_email = st.user.email
-except:
-    pass
+conn = st.connection("gsheets", type=GSheetsConnection)
 
-# Se la lettura automatica fallisce, usa la mail inserita manualmente
-if 'manual_email' in st.session_state:
-    user_email = st.session_state.manual_email
+# Gestione utente loggato
+user_email = st.session_state.get('manual_email', None)
 
-# Schermata di Login Elegante (Se non c'è nessuna email)
-if not user_email or user_email == "test@gmail.com":
+# Schermata di Login
+if not user_email:
     st.markdown("<br><br><h1 style='text-align: center;'>Monitoraggio Portafogli 📈</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #888;'>Accesso Riservato</p><br>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.container(border=True):
-            st.info("🔑 Inserisci la tua email per collegarti al tuo database privato.")
+            st.info("🔑 Inserisci le tue credenziali per accedere.")
             input_mail = st.text_input("Email", placeholder="es. nome.cognome@gmail.com")
+            input_pass = st.text_input("Password", type="password")
+            
             if st.button("Accedi", type="primary", width="stretch"):
-                if "@" in input_mail:
-                    st.session_state.manual_email = input_mail.strip().lower()
-                    st.rerun()
+                if "@" in input_mail and input_pass:
+                    mail_pulita = input_mail.strip().lower()
+                    try:
+                        df_rubrica = conn.read(worksheet="Rubrica", ttl=0)
+                        utente = df_rubrica[(df_rubrica['Email'] == mail_pulita) & (df_rubrica['Password'] == str(input_pass))]
+                        
+                        if not utente.empty:
+                            st.session_state.manual_email = mail_pulita
+                            st.rerun()
+                        else:
+                            # Se non esiste, potrebbe essere un nuovo utente. Andiamo alla registrazione.
+                            check_esistenza = df_rubrica[df_rubrica['Email'] == mail_pulita]
+                            if not check_esistenza.empty:
+                                st.error("Password errata.")
+                            else:
+                                st.session_state.registrazione_in_corso = True
+                                st.session_state.reg_mail = mail_pulita
+                                st.session_state.reg_pass = str(input_pass)
+                                st.rerun()
+                    except:
+                        # Se il foglio rubrica è vuoto/nuovo
+                        st.session_state.registrazione_in_corso = True
+                        st.session_state.reg_mail = mail_pulita
+                        st.session_state.reg_pass = str(input_pass)
+                        st.rerun()
                 else:
-                    st.error("Per favore, inserisci un'email valida.")
-    st.stop() # Ferma l'app qui finché non c'è l'email
+                    st.error("Inserisci Email e Password.")
+    st.stop()
 
 # ==========================================
-# (Da qui in poi lascia invariato il codice con IL ROUTER e il resto dell'app)
-
+# 2. IL ROUTER E REGISTRAZIONE NUOVO UTENTE
 # ==========================================
-# 2. IL ROUTER (LA RUBRICA LINK)
-# ==========================================
-conn = st.connection("gsheets", type=GSheetsConnection)
 
-@st.cache_data(ttl=5)
-def get_user_link(email):
-    try:
-        df_rubrica = conn.read(worksheet="Rubrica", ttl=0)
-        user_row = df_rubrica[df_rubrica['Email'] == email]
-        if not user_row.empty:
-            return user_row.iloc[0]['Link']
-    except Exception as e:
-        return None
-    return None
-
-user_sheet_link = get_user_link(user_email)
-
-# Schermata di Onboarding per il nuovo utente
-if not user_sheet_link:
+if st.session_state.get('registrazione_in_corso'):
     st.title("Benvenuto nel Monitoraggio Portafogli 📈")
-    st.markdown(f"Ciao **{user_email}**! Sembra che tu non abbia ancora collegato il tuo database privato.")
+    st.markdown(f"Ciao **{st.session_state.reg_mail}**! Prima configurazione in corso.")
     st.info("💡 **Istruzioni:**\n1. Crea un Foglio Google sul tuo Drive.\n2. Rinomina la prima linguetta in `Portafogli`.\n3. Condividilo come *Editor* con l'email del bot (`bot-portafoglio@gen-lang-client-0966462787.iam.gserviceaccount.com`).\n4. Incolla il link qui sotto.")
     
     new_link = st.text_input("Inserisci il link del tuo Foglio Google privato:")
@@ -122,17 +93,30 @@ if not user_sheet_link:
         if new_link.startswith("https://docs.google.com/spreadsheets/"):
             try:
                 df_rubrica = conn.read(worksheet="Rubrica", ttl=0)
-                nuova_riga = pd.DataFrame([{"Email": user_email, "Link": new_link}])
+                nuova_riga = pd.DataFrame([{"Email": st.session_state.reg_mail, "Link": new_link, "Password": st.session_state.reg_pass}])
                 df_aggiornata = pd.concat([df_rubrica, nuova_riga], ignore_index=True)
             except:
-                df_aggiornata = pd.DataFrame([{"Email": user_email, "Link": new_link}])
+                df_aggiornata = pd.DataFrame([{"Email": st.session_state.reg_mail, "Link": new_link, "Password": st.session_state.reg_pass}])
             
             conn.update(worksheet="Rubrica", data=df_aggiornata)
             st.cache_data.clear()
+            st.session_state.manual_email = st.session_state.reg_mail
+            st.session_state.registrazione_in_corso = False
             st.rerun()
         else:
-            st.error("Link non valido. Assicurati che sia un link di Google Sheets.")
+            st.error("Link non valido.")
     st.stop()
+
+@st.cache_data(ttl=5)
+def get_user_link(email):
+    try:
+        df_rubrica = conn.read(worksheet="Rubrica", ttl=0)
+        user_row = df_rubrica[df_rubrica['Email'] == email]
+        if not user_row.empty: return user_row.iloc[0]['Link']
+    except Exception: return None
+    return None
+
+user_sheet_link = get_user_link(user_email)
 
 # ==========================================
 # 3. GESTIONE DATABASE PRIVATO DELL'UTENTE

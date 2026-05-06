@@ -93,9 +93,17 @@ if st.session_state.get('registrazione_in_corso'):
         if new_link.startswith("https://docs.google.com/spreadsheets/"):
             try:
                 df_rubrica = conn.read(worksheet="Rubrica", ttl=0)
-                nuova_riga = pd.DataFrame([{"Email": st.session_state.reg_mail, "Link": new_link, "Password": st.session_state.reg_pass}])
-                df_aggiornata = pd.concat([df_rubrica, nuova_riga], ignore_index=True)
+                # CONTROLLO ANTI-DOPPIONE INTELLIGENTE
+                if 'Email' in df_rubrica.columns and st.session_state.reg_mail in df_rubrica['Email'].values:
+                    # Se l'utente esiste già, sovrascrive la riga (non crea doppioni)
+                    df_rubrica.loc[df_rubrica['Email'] == st.session_state.reg_mail, ['Link', 'Password']] = [new_link, st.session_state.reg_pass]
+                    df_aggiornata = df_rubrica
+                else:
+                    # Se è davvero nuovo, aggiunge la riga in fondo
+                    nuova_riga = pd.DataFrame([{"Email": st.session_state.reg_mail, "Link": new_link, "Password": st.session_state.reg_pass}])
+                    df_aggiornata = pd.concat([df_rubrica, nuova_riga], ignore_index=True)
             except:
+                # Se il foglio è completamente vuoto
                 df_aggiornata = pd.DataFrame([{"Email": st.session_state.reg_mail, "Link": new_link, "Password": st.session_state.reg_pass}])
             
             conn.update(worksheet="Rubrica", data=df_aggiornata)

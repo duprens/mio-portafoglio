@@ -60,8 +60,8 @@ if 'registrazione_in_corso' not in st.session_state: st.session_state.registrazi
 # ==========================================
 if st.session_state.registrazione_in_corso:
     st.title("Benvenuto 📈")
-    st.markdown(f"Ciao **{st.session_state.reg_mail}**! Prima configurazione del tuo database.")
-    st.info("💡 Incolla il link del tuo Foglio Google privato (ricorda di condividerlo con il bot come Editor).")
+    st.markdown(f"Ciao **{st.session_state.reg_mail}**! Configura il tuo database.")
+    st.info("💡 Incolla il link del tuo Foglio Google privato.")
     
     new_link = st.text_input("Link Foglio Google:")
     if st.button("Collega Database", type="primary"):

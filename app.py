@@ -59,7 +59,7 @@ if 'registrazione_in_corso' not in st.session_state: st.session_state.registrazi
 # 2. LOGICA DI REGISTRAZIONE (PRIMA DEL LOGIN)
 # ==========================================
 if st.session_state.registrazione_in_corso:
-    st.title("Benvenuto 📈")
+    st.title("Benvenuto 💎")
     st.markdown(f"Ciao **{st.session_state.reg_mail}**! Configura il tuo database.")
     st.info("💡 Incolla il link del tuo Foglio Google privato.")
     

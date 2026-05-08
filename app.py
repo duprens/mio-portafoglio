@@ -485,7 +485,7 @@ else:
                 name='Capitale Versato', hovertemplate='%{y:,.2f} €'
             ))
             
-            # Area verde (Interesse Composto) - Nome modificato
+            # Area verde (Interesse Composto)
             fig_pr.add_trace(go.Scatter(
                 x=a_l, y=v_f_l, mode='lines', line=dict(color='#00c853', width=3), 
                 fillcolor='rgba(0, 200, 83, 0.2)', fill='tonexty', 
@@ -500,7 +500,13 @@ else:
             )
             st.plotly_chart(fig_pr, width="stretch")
             
+            # Calcoli finali
+            val_fin = v_f_l[-1]
+            cap_ver = c_v_l[-1]
+            int_gen = val_fin - cap_ver
+            perc_crescita = (int_gen / cap_ver * 100) if cap_ver > 0 else 0
+            
             res1, res2, res3 = st.columns(3)
-            res1.metric("Versato Stimato", f"{c_v_l[-1]:,.2f} €")
-            res2.metric("Interessi Generati", f"{(v_f_l[-1] - c_v_l[-1]):,.2f} €")
-            res3.markdown(f'<div style="font-size: 14px; color: #a6a6a6;">Valore Finale</div><div style="font-size: 2.25rem; font-weight: 600; color: #00c853;">{v_f_l[-1]:,.2f} €</div>', unsafe_allow_html=True)
+            res1.metric("Versato Stimato", f"{cap_ver:,.2f} €")
+            res2.metric("Interessi Generati", f"{int_gen:,.2f} €")
+            res3.markdown(f'<div style="font-size: 14px; color: #a6a6a6;">Valore Finale</div><div style="font-size: 2.25rem; font-weight: 600; color: #00c853;">{val_fin:,.2f} € <span style="font-size: 1.25rem; font-weight: normal; opacity: 0.8;">(+{perc_crescita:.2f}%)</span></div>', unsafe_allow_html=True)

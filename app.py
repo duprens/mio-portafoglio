@@ -455,7 +455,7 @@ else:
     # ==========================================
     st.divider()
     
-    st.subheader("🔮 Pianificazione e Interesse Composto")
+    st.subheader("Pianificatore")
     st.markdown("<p style='font-size: 14px; color: #a6a6a6;'>Simula l'andamento futuro del portafoglio. Inserisci il nuovo capitale che il cliente prevede di apportare ogni anno (es. 2-3 ingressi sommati).</p>", unsafe_allow_html=True)
     
     # Calcolo del Rendimento Annualizzato Storico (CAGR)

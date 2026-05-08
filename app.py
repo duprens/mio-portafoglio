@@ -449,3 +449,95 @@ else:
                 fig_val = go.Figure(data=[go.Pie(labels=df_val["Legenda"], values=df_val["Controvalore"], customdata=df_val.apply(lambda r: f"<b>{r['Valuta']}</b><br>Totale: {r['Controvalore']:.2f} €<br><b>Strumenti:</b>{r['Strumenti']}", axis=1), hovertemplate="%{customdata}<extra></extra>", hole=.4, sort=False, textinfo='none', domain=dict(x=[0, 0.5]), marker=dict(colors=colori_torta, line=dict(color='#1e1e1e', width=2)))]) 
                 fig_val.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', title_text="Esposizione Valutaria", template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)))
                 st.plotly_chart(fig_val, width="stretch")
+
+    # ==========================================
+    # 8. PIANIFICAZIONE E INTERESSE COMPOSTO
+    # ==========================================
+    st.divider()
+    
+    st.subheader("🔮 Pianificazione e Interesse Composto")
+    st.markdown("<p style='font-size: 14px; color: #a6a6a6;'>Simula l'andamento futuro del portafoglio. Inserisci il nuovo capitale che il cliente prevede di apportare ogni anno (es. 2-3 ingressi sommati in un'unica cifra).</p>", unsafe_allow_html=True)
+    
+    with st.container(border=True):
+        col_calc1, col_calc2, col_calc3 = st.columns(3)
+        
+        with col_calc1:
+            anni_proiezione = st.slider("Orizzonte Temporale (Anni)", min_value=1, max_value=40, value=15, step=1)
+        with col_calc2:
+            rendimento_atteso = st.slider("Rendimento Annuo Atteso (%)", min_value=0.0, max_value=15.0, value=5.0, step=0.5)
+        with col_calc3:
+            aggiunta_annuale = st.number_input("Nuovo Capitale Annuo Totale (€)", min_value=0.0, value=5000.0, step=1000.0, format="%.2f", help="Somma dei versamenti previsti in un anno (es. 2 ingressi da 2.500€ = 5.000€)")
+            
+        capitale_iniziale = totale_controvalore
+        tasso = rendimento_atteso / 100
+        
+        anni_list = list(range(0, anni_proiezione + 1))
+        capitale_versato_list = []
+        valore_futuro_list = []
+        
+        for anno in anni_list:
+            # 1. Capitale fisicamente versato di tasca propria
+            versato_finora = capitale_iniziale + (aggiunta_annuale * anno)
+            capitale_versato_list.append(versato_finora)
+            
+            # 2. Valore futuro con interesse composto
+            if anno == 0:
+                valore_futuro_list.append(capitale_iniziale)
+            else:
+                if tasso > 0:
+                    fv = capitale_iniziale * (1 + tasso)**anno + aggiunta_annuale * (((1 + tasso)**anno - 1) / tasso)
+                else:
+                    fv = versato_finora
+                valore_futuro_list.append(fv)
+                
+        # --- Creazione Grafico ---
+        fig_proj = go.Figure()
+        
+        # Area grigia (Capitale Versato)
+        fig_proj.add_trace(go.Scatter(
+            x=anni_list, y=capitale_versato_list,
+            mode='lines',
+            line=dict(width=0),
+            fillcolor='rgba(150, 150, 150, 0.3)',
+            fill='tozeroy',
+            name='Capitale Versato (Netto)',
+            hovertemplate='Anno %{x}<br>Versato: %{y:,.2f} €<extra></extra>'
+        ))
+        
+        # Area verde (Valore Totale con Interessi)
+        fig_proj.add_trace(go.Scatter(
+            x=anni_list, y=valore_futuro_list,
+            mode='lines',
+            line=dict(color='#00c853', width=3),
+            fillcolor='rgba(0, 200, 83, 0.2)',
+            fill='tonexty',
+            name='Valore Finale Proiettato',
+            hovertemplate='Anno %{x}<br>Totale: %{y:,.2f} €<extra></extra>'
+        ))
+        
+        fig_proj.update_layout(
+            template="plotly_dark",
+            height=380,
+            margin=dict(l=0, r=0, t=30, b=10),
+            xaxis_title="Anni Futuri",
+            yaxis_title="Controvalore Stimato (€)",
+            hovermode="x unified",
+            showlegend=True,
+            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor='rgba(0,0,0,0)')
+        )
+        
+        st.plotly_chart(fig_proj, width="stretch")
+        
+        # --- Metriche Riassuntive ---
+        valore_finale = valore_futuro_list[-1]
+        totale_versato = capitale_versato_list[-1]
+        interessi_generati = valore_finale - totale_versato
+        
+        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+        c_res1, c_res2, c_res3 = st.columns(3)
+        c_res1.metric("Totale Versato Stimato", f"{totale_versato:,.2f} €")
+        c_res2.metric("Interessi Generati", f"{interessi_generati:,.2f} €")
+        
+        col_vf = "#00c853" if interessi_generati >= 0 else "#ff4b4b"
+        c_res3.markdown(f'<div style="font-size: 14px; color: #a6a6a6;">Valore Finale Proiettato</div><div style="font-size: 2.25rem; font-weight: 600; color: {col_vf};">{valore_finale:,.2f} €</div>', unsafe_allow_html=True)
+

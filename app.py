@@ -471,9 +471,9 @@ else:
             a_l = list(range(0, anni_p + 1))
             c_v_l, v_f_l = [], []
             for a in a_l:
-                v_fin = val_tot + (agg_annua * a); c_v_l.append(v_fin)
-                if a == 0: v_f_l.append(val_tot)
-                else: v_f_l.append(val_tot * (1 + tasso_p)**a + agg_annua * (((1 + tasso_p)**a - 1) / tasso_p) if tasso_p > 0 else v_fin)
+                v_fin = totale_controvalore + (agg_annua * a); c_v_l.append(v_fin)
+                if a == 0: v_f_l.append(totale_controvalore)
+                else: v_f_l.append(totale_controvalore * (1 + tasso_p)**a + agg_annua * (((1 + tasso_p)**a - 1) / tasso_p) if tasso_p > 0 else v_fin)
             
             fig_pr = go.Figure()
             fig_pr.add_trace(go.Scatter(x=a_l, y=c_v_l, mode='lines', line=dict(width=0), fillcolor='rgba(150, 150, 150, 0.3)', fill='tozeroy', name='Capitale Versato'))

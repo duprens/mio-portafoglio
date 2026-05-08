@@ -456,17 +456,34 @@ else:
     st.divider()
     
     st.subheader("🔮 Pianificazione e Interesse Composto")
-    st.markdown("<p style='font-size: 14px; color: #a6a6a6;'>Simula l'andamento futuro del portafoglio. Inserisci il nuovo capitale che il cliente prevede di apportare ogni anno (es. 2-3 ingressi sommati in un'unica cifra).</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 14px; color: #a6a6a6;'>Simula l'andamento futuro del portafoglio. Inserisci il nuovo capitale che il cliente prevede di apportare ogni anno (es. 2-3 ingressi sommati).</p>", unsafe_allow_html=True)
+    
+    # Calcolo del Rendimento Annualizzato Storico (CAGR)
+    giorni_passati = (pd.Timestamp.today() - pd.to_datetime(d_inizio)).days
+    rendimento_storico_annuo = 0.0
+    if costo_totale_pmc > 0 and giorni_passati > 0:
+        # Freno di sicurezza: usiamo minimo 30 giorni per evitare percentuali folli su ptf appena creati
+        giorni_effettivi = max(giorni_passati, 30)
+        rendimento_storico_annuo = ((totale_controvalore / costo_totale_pmc) ** (365.25 / giorni_effettivi)) - 1
+        rendimento_storico_annuo *= 100
     
     with st.container(border=True):
         col_calc1, col_calc2, col_calc3 = st.columns(3)
         
         with col_calc1:
             anni_proiezione = st.slider("Orizzonte Temporale (Anni)", min_value=1, max_value=40, value=15, step=1)
+        
         with col_calc2:
-            rendimento_atteso = st.slider("Rendimento Annuo Atteso (%)", min_value=0.0, max_value=15.0, value=5.0, step=0.5)
+            usa_storico = st.checkbox(f"Usa storico annualizzato ({rendimento_storico_annuo:+.2f}%)", value=False)
+            if usa_storico:
+                rendimento_atteso = rendimento_storico_annuo
+                colore_tasso = "#00c853" if rendimento_atteso >= 0 else "#ff4b4b"
+                st.markdown(f"<div style='padding-top: 5px; font-weight: bold; color: {colore_tasso};'>Tasso di proiezione bloccato al {rendimento_atteso:+.2f}%</div>", unsafe_allow_html=True)
+            else:
+                rendimento_atteso = st.slider("Rendimento Annuo Atteso (%)", min_value=-10.0, max_value=30.0, value=5.0, step=0.5)
+                
         with col_calc3:
-            aggiunta_annuale = st.number_input("Nuovo Capitale Annuo Totale (€)", min_value=0.0, value=5000.0, step=1000.0, format="%.2f", help="Somma dei versamenti previsti in un anno (es. 2 ingressi da 2.500€ = 5.000€)")
+            aggiunta_annuale = st.number_input("Nuovo Capitale Annuo Totale (€)", min_value=0.0, value=5000.0, step=1000.0, format="%.2f", help="Somma dei versamenti previsti in un anno")
             
         capitale_iniziale = totale_controvalore
         tasso = rendimento_atteso / 100
@@ -484,7 +501,7 @@ else:
             if anno == 0:
                 valore_futuro_list.append(capitale_iniziale)
             else:
-                if tasso > 0:
+                if tasso != 0:
                     fv = capitale_iniziale * (1 + tasso)**anno + aggiunta_annuale * (((1 + tasso)**anno - 1) / tasso)
                 else:
                     fv = versato_finora
@@ -504,12 +521,15 @@ else:
             hovertemplate='Anno %{x}<br>Versato: %{y:,.2f} €<extra></extra>'
         ))
         
-        # Area verde (Valore Totale con Interessi)
+        # Area verde/rossa (Valore Totale con Interessi/Perdite)
+        colore_area = 'rgba(0, 200, 83, 0.2)' if tasso >= 0 else 'rgba(255, 75, 75, 0.2)'
+        colore_linea = '#00c853' if tasso >= 0 else '#ff4b4b'
+        
         fig_proj.add_trace(go.Scatter(
             x=anni_list, y=valore_futuro_list,
             mode='lines',
-            line=dict(color='#00c853', width=3),
-            fillcolor='rgba(0, 200, 83, 0.2)',
+            line=dict(color=colore_linea, width=3),
+            fillcolor=colore_area,
             fill='tonexty',
             name='Valore Finale Proiettato',
             hovertemplate='Anno %{x}<br>Totale: %{y:,.2f} €<extra></extra>'
@@ -540,4 +560,3 @@ else:
         
         col_vf = "#00c853" if interessi_generati >= 0 else "#ff4b4b"
         c_res3.markdown(f'<div style="font-size: 14px; color: #a6a6a6;">Valore Finale Proiettato</div><div style="font-size: 2.25rem; font-weight: 600; color: {col_vf};">{valore_finale:,.2f} €</div>', unsafe_allow_html=True)
-

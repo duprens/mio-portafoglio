@@ -449,3 +449,37 @@ else:
                 fig_val = go.Figure(data=[go.Pie(labels=df_val["Legenda"], values=df_val["Controvalore"], customdata=df_val.apply(lambda r: f"<b>{r['Valuta']}</b><br>Totale: {r['Controvalore']:.2f} €<br><b>Strumenti:</b>{r['Strumenti']}", axis=1), hovertemplate="%{customdata}<extra></extra>", hole=.4, sort=False, textinfo='none', domain=dict(x=[0, 0.5]), marker=dict(colors=colori_torta, line=dict(color='#1e1e1e', width=2)))]) 
                 fig_val.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', title_text="Esposizione Valutaria", template="plotly_dark", height=380, margin=dict(l=0, r=0, t=40, b=10), showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)))
                 st.plotly_chart(fig_val, width="stretch")
+
+    # ==========================================
+    # 8. PIANIFICATORE (SENZA EMOJI E CON PROFILI)
+    # ==========================================
+    if not df.empty:
+        st.divider()
+        st.subheader("Pianificatore")
+        st.markdown("<p style='font-size: 14px; color: #a6a6a6;'>Simula l'andamento futuro. Inserisci il risparmio annuo stimato e scegli un profilo di rischio.</p>", unsafe_allow_html=True)
+        with st.container(border=True):
+            col_p1, col_p2, col_p3 = st.columns(3)
+            with col_p1: anni_p = st.slider("Orizzonte (Anni)", 1, 40, 15)
+            with col_p2:
+                prof = st.selectbox("Profilo di Investimento", ["Prudente (3%)", "Bilanciato (5%)", "Azionario (8%)"], index=1)
+                mapping = {"Prudente (3%)": 3.0, "Bilanciato (5%)": 5.0, "Azionario (8%)": 8.0}
+                tasso_p = mapping[prof] / 100
+            with col_p3: agg_annua = st.number_input("Risparmio Annuo Totale (€)", min_value=0.0, value=5000.0, step=1000.0)
+            
+            a_l = list(range(0, anni_p + 1))
+            c_v_l, v_f_l = [], []
+            for a in a_l:
+                v_fin = val_tot + (agg_annua * a); c_v_l.append(v_fin)
+                if a == 0: v_f_l.append(val_tot)
+                else: v_f_l.append(val_tot * (1 + tasso_p)**a + agg_annua * (((1 + tasso_p)**a - 1) / tasso_p) if tasso_p > 0 else v_fin)
+            
+            fig_pr = go.Figure()
+            fig_pr.add_trace(go.Scatter(x=a_l, y=c_v_l, mode='lines', line=dict(width=0), fillcolor='rgba(150, 150, 150, 0.3)', fill='tozeroy', name='Capitale Versato'))
+            fig_pr.add_trace(go.Scatter(x=a_l, y=v_f_l, mode='lines', line=dict(color='#00c853', width=3), fillcolor='rgba(0, 200, 83, 0.2)', fill='tonexty', name='Valore Proiettato'))
+            fig_pr.update_layout(template="plotly_dark", height=380, margin=dict(l=0, r=0, t=30, b=10), hovermode="x unified", xaxis=dict(spikedash='solid', spikemode='across', showspikes=True, spikethickness=1))
+            st.plotly_chart(fig_pr, width="stretch")
+            
+            res1, res2, res3 = st.columns(3)
+            res1.metric("Versato Stimato", f"{c_v_l[-1]:,.2f} €")
+            res2.metric("Interessi Generati", f"{(v_f_l[-1] - c_v_l[-1]):,.2f} €")
+            res3.markdown(f'<div style="font-size: 14px; color: #a6a6a6;">Valore Finale</div><div style="font-size: 2.25rem; font-weight: 600; color: #00c853;">{v_f_l[-1]:,.2f} €</div>', unsafe_allow_html=True)

@@ -19,6 +19,8 @@ st.markdown(
     """
     <style>
     .stAppDeployButton {display:none;}
+    .stSlider [data-baseweb="slider"] > div > div > div > div { background-color: #555555 !important; }
+    .stSlider [data-baseweb="slider"] [role="slider"] { background-color: #555555 !important; border-color: #555555 !important; box-shadow: none !important; }
     
     /* ESORCISMO UNIVERSALE DEL ROSSO */
     :root, .stApp { --primary-color: #555555 !important; --focus-ring-color: transparent !important; }

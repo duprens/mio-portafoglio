@@ -19,8 +19,9 @@ st.markdown(
     """
     <style>
     .stAppDeployButton {display:none;}
-    .stSlider [data-baseweb="slider"] > div > div > div > div { background-color: #555555 !important; }
-    .stSlider [data-baseweb="slider"] [role="slider"] { background-color: #555555 !important; border-color: #555555 !important; box-shadow: none !important; }
+    /* Slider: esorcismo definitivo del rosso su traccia e pallino */
+    div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] { background-color: #555555 !important; border-color: #555555 !important; box-shadow: none !important; }
+    div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div > div > div { background-color: #555555 !important; }
     
     /* ESORCISMO UNIVERSALE DEL ROSSO */
     :root, .stApp { --primary-color: #555555 !important; --focus-ring-color: transparent !important; }
@@ -476,9 +477,27 @@ else:
                 else: v_f_l.append(totale_controvalore * (1 + tasso_p)**a + agg_annua * (((1 + tasso_p)**a - 1) / tasso_p) if tasso_p > 0 else v_fin)
             
             fig_pr = go.Figure()
-            fig_pr.add_trace(go.Scatter(x=a_l, y=c_v_l, mode='lines', line=dict(width=0), fillcolor='rgba(150, 150, 150, 0.3)', fill='tozeroy', name='Capitale Versato'))
-            fig_pr.add_trace(go.Scatter(x=a_l, y=v_f_l, mode='lines', line=dict(color='#00c853', width=3), fillcolor='rgba(0, 200, 83, 0.2)', fill='tonexty', name='Valore Proiettato'))
-            fig_pr.update_layout(template="plotly_dark", height=380, margin=dict(l=0, r=0, t=30, b=10), hovermode="x unified", xaxis=dict(spikedash='solid', spikemode='across', showspikes=True, spikethickness=1))
+            
+            # Area grigia (Capitale Versato)
+            fig_pr.add_trace(go.Scatter(
+                x=a_l, y=c_v_l, mode='lines', line=dict(width=0), 
+                fillcolor='rgba(150, 150, 150, 0.3)', fill='tozeroy', 
+                name='Capitale Versato', hovertemplate='%{y:,.2f} €'
+            ))
+            
+            # Area verde (Interesse Composto) - Nome modificato
+            fig_pr.add_trace(go.Scatter(
+                x=a_l, y=v_f_l, mode='lines', line=dict(color='#00c853', width=3), 
+                fillcolor='rgba(0, 200, 83, 0.2)', fill='tonexty', 
+                name='Interesse Composto', hovertemplate='%{y:,.2f} €'
+            ))
+            
+            # Pop-up (hoverlabel) allargato e migliorato
+            fig_pr.update_layout(
+                template="plotly_dark", height=380, margin=dict(l=0, r=0, t=30, b=10), 
+                hovermode="x unified", hoverlabel=dict(bgcolor="rgba(30, 30, 30, 0.95)", font_size=14, bordercolor="#555"),
+                xaxis=dict(spikedash='solid', spikemode='across', showspikes=True, spikethickness=1)
+            )
             st.plotly_chart(fig_pr, width="stretch")
             
             res1, res2, res3 = st.columns(3)

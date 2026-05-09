@@ -64,7 +64,6 @@ def _render_login():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.container(border=True):
-            st.info("🔑 Inserisci le tue credenziali per accedere.")
             input_mail = st.text_input("Email", placeholder="es. nome.cognome@gmail.com")
             input_pass = st.text_input("Password", type="password")
 

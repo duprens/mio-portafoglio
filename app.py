@@ -8,7 +8,7 @@ from auth import gate, logout_button
 import data
 from charts import colora, candele_fig, pie_fig, planner_fig
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
 apply_styles()
 assert_encryption_key()
@@ -88,9 +88,7 @@ if st.session_state.cliente_selezionato in st.session_state.clienti_database:
 # ==========================================
 # DASHBOARD
 # ==========================================
-if not st.session_state.cliente_selezionato:
-    st.info("👋 Benvenuto! Aggiungi il tuo primo cliente dalla barra laterale per iniziare.")
-else:
+if st.session_state.cliente_selezionato:
     cliente = st.session_state.cliente_selezionato
     ptf_c = st.session_state.clienti_database[cliente]
     d_inizio = st.session_state.date_inizio_clienti.get(cliente, "2024-01-01")

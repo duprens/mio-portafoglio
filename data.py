@@ -16,9 +16,9 @@ LINK_COL = "LinkEnc"
 PASS_COL = "PasswordHash"
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def _conn():
-    return st.connection("gsheets", type=GSheetsConnection)
+    return st.connection("gsheets", type=GSheetsConnection, show_toast=False)
 
 
 # ----- Rubrica -----
@@ -85,7 +85,7 @@ def upsert_user(rubrica_df: pd.DataFrame, email: str, link: str, hashed_pwd: str
     _conn().update(worksheet="Rubrica", data=out)
 
 
-@st.cache_data(ttl=5)
+@st.cache_data(ttl=5, show_spinner=False)
 def get_user_link(email: str):
     try:
         df = load_rubrica()
@@ -158,7 +158,7 @@ def load_portfolio(sheet_link: str):
 
 # ----- Pricing -----
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=60, show_spinner=False)
 def fetch_prices(tickers):
     prices = {}
     if not tickers:
@@ -177,7 +177,7 @@ def fetch_prices(tickers):
     return prices
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=3600, show_spinner=False)
 def fetch_candele(tickers_list, portfolio_data, start_date, tf):
     try:
         data = yf.download(tickers_list, start=start_date, interval=tf, progress=False)

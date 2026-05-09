@@ -52,7 +52,6 @@ prezzi_aggiornati = data.fetch_prices(tutti_i_tickers)
 st.sidebar.markdown(f"<div style='font-size: 0.7rem; color: #888; margin-bottom: -15px;'>Utente: {user_email}</div>", unsafe_allow_html=True)
 st.sidebar.title("Portafogli Clienti")
 st.sidebar.markdown("<hr style='margin-top: -15px; margin-bottom: 15px; border: 0; border-top: 1px solid rgba(130,130,130,0.3);'>", unsafe_allow_html=True)
-logout_button()
 
 for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.split()[-1]):
     valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])

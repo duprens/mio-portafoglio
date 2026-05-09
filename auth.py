@@ -128,6 +128,7 @@ def gate() -> str:
 
 
 def logout_button():
+    st.sidebar.markdown('<div id="logout-btn-anchor" style="display:none"></div>', unsafe_allow_html=True)
     if st.sidebar.button("Esci", width="stretch"):
         _clear_session()
         st.rerun()

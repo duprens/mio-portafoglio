@@ -1,5 +1,7 @@
-streamlit
-yfinance
-pandas
-plotly
-st-gsheets-connection
+streamlit>=1.28
+yfinance>=0.2.32
+pandas>=2.0
+plotly>=5.17
+st-gsheets-connection>=0.0.4
+bcrypt>=4.0
+cryptography>=41.0

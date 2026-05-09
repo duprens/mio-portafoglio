@@ -464,7 +464,7 @@ else:
             col_p1, col_p2, col_p3 = st.columns(3)
             with col_p1: anni_p = st.slider("Orizzonte (Anni)", 1, 40, 15)
             with col_p2:
-                prof = st.selectbox("Profilo di Investimento", ["Prudente (3%)", "Bilanciato (5%)", "Azionario (8%)"], index=1)
+                prof = st.selectbox("Profilo di Investimento", ["Prudente (3%)", "Bilanciato (5%)", "Dinamico (8%)"], index=1)
                 mapping = {"Prudente (3%)": 3.0, "Bilanciato (5%)": 5.0, "Azionario (8%)": 8.0}
                 tasso_p = mapping[prof] / 100
             with col_p3: agg_annua = st.number_input("Risparmio Annuo Totale (€)", min_value=0.0, value=5000.0, step=1000.0)

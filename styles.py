@@ -17,7 +17,7 @@ CSS = """
 /* Nasconde il widget di stato "Running..." in alto a destra */
 div[data-testid="stStatusWidget"] { visibility: hidden; display: none !important; }
 
-/* Sovrascrittura variabili root di Streamlit per forzare il tema */
+/* Sovrascrittura variabili root di Streamlit */
 :root {
     --background-color: [[BG]] !important;
     --secondary-background-color: [[SIDEBAR]] !important;
@@ -25,19 +25,24 @@ div[data-testid="stStatusWidget"] { visibility: hidden; display: none !important
     --primary-color: [[MAIN]] !important;
 }
 
-/* Sfondi e Testi App - Target aggressivo */
-[data-testid="stAppViewContainer"], [data-testid="stHeader"], .stApp {
+/* Sfondi e Testi App */
+[data-testid="stAppViewContainer"], [data-testid="stHeader"], .stApp, [data-testid="stMain"] {
     background-color: [[BG]] !important;
     color: [[TEXT]] !important;
 }
 
-[data-testid="stSidebar"], [data-testid="stSidebarContent"], [data-testid="stSidebarNav"] {
+[data-testid="stSidebar"], [data-testid="stSidebarContent"], [data-testid="stSidebarNav"], [data-testid="stSidebarUserContent"] {
     background-color: [[SIDEBAR]] !important;
 }
 
-/* Forza colore testo su tutti gli elementi comuni */
-.stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp p, .stApp label, .stApp span {
+/* Forza colore testo su elementi comuni, escludendo i bottoni primary */
+.stApp p, .stApp label, [data-testid="stMetricValue"], [data-testid="stHeader"] {
     color: [[TEXT]] !important;
+}
+
+/* Tabellee Data Editor: forziamo lo sfondo */
+[data-testid="stDataFrame"], [data-testid="stDataEditor"], .stTable {
+    background-color: [[BG]] !important;
 }
 
 /* Slider: esorcismo definitivo del rosso su traccia, pallino e label numerica */
@@ -58,7 +63,8 @@ div[data-testid="stSlider"] [data-testid="stThumbValue"] { color: [[TEXT]] !impo
 button[kind="primary"] { background-color: [[MAIN]] !important; border-color: [[MAIN]] !important; color: white !important; }
 button[kind="primary"]:hover, button[kind="primary"]:focus, button[kind="primary"]:active { background-color: [[HOVER]] !important; border-color: [[MAIN]] !important; color: white !important; box-shadow: none !important; }
 
-/* Tasti Secondary */
+/* Tasti Secondary (quelli che restavano neri) */
+button[kind="secondary"] { background-color: rgba([[RGB]], 0.1) !important; border-color: rgba([[RGB]], 0.2) !important; color: [[TEXT]] !important; }
 button[kind="secondary"]:focus, button[kind="secondary"]:active { border-color: rgba([[RGB]], 0.4) !important; box-shadow: none !important; }
 button[kind="secondary"]:hover { background-color: rgba([[RGB]], 0.25) !important; border-color: rgba([[RGB]], 0.4) !important; }
 

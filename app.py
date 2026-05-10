@@ -57,10 +57,10 @@ for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.spl
     valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])
     costo_tot = sum(i["PMC"] * i["Quantità"] for i in st.session_state.clienti_database[nome])
     var_p = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
-    # Pallino di stato: verde per variazioni positive, rosso per negative, bianco per zero
-    pallino = "🟢" if var_p > 0 else ("🔴" if var_p < 0 else "⚪")
+    # Freccia di stato: su per variazioni positive, giù per negative
+    freccia = "▲" if var_p > 0 else ("▼" if var_p < 0 else "")
     if st.sidebar.button(
-        f"{nome} | {var_p:+.2f}% {pallino}",
+        f"{nome} | {var_p:+.2f}% {freccia}".strip(),
         width="stretch",
         type="primary" if st.session_state.cliente_selezionato == nome else "secondary",
     ):

@@ -54,16 +54,17 @@ st.sidebar.title("Portafogli Clienti")
 st.sidebar.markdown("<hr style='margin-top: -15px; margin-bottom: 15px; border: 0; border-top: 1px solid rgba(130,130,130,0.3);'>", unsafe_allow_html=True)
 
 for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.split()[-1]):
-    valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])
+        valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])
     costo_tot = sum(i["PMC"] * i["Quantità"] for i in st.session_state.clienti_database[nome])
     var_p = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
-    # Icona di stato: verde su per variazioni positive, rossa giù per negative
-    icona = "🟢 ▲" if var_p > 0 else ("🔴 ▼" if var_p < 0 else "⚪")
+    # Pallino di stato: verde per variazioni positive, rosso per negative, bianco per zero
+    pallino = "🟢" if var_p > 0 else ("🔴" if var_p < 0 else "⚪")
     if st.sidebar.button(
-        f"{icona} {nome} | {var_p:+.2f}%",
+        f"{nome} | {var_p:+.2f}% {pallino}",
         width="stretch",
         type="primary" if st.session_state.cliente_selezionato == nome else "secondary",
     ):
+
         st.session_state.cliente_selezionato, st.session_state.timeframe_scelta = nome, "D"
         st.rerun()
 

@@ -1,6 +1,10 @@
+import streamlit as st
 import plotly.graph_objects as go
 
 COLORI_TORTA = ["#2979ff", "#00c853", "#aa00ff", "#ffcf33", "#ff4b4b", "#ff9100", "#00e5ff", "#f50057"]
+
+def _get_template():
+    return "plotly_dark" if st.session_state.get("theme") == "Grigio Fumo" else "plotly_white"
 
 
 def colora(val):
@@ -40,7 +44,7 @@ def candele_fig(dati_c, costo_totale_pmc):
     fig.update_xaxes(tickformat="%b %Y", ticklabelmode="period")
     fig.update_layout(
         yaxis_title="Controvalore (€)", xaxis_rangeslider_visible=False,
-        margin=dict(l=20, r=20, t=30, b=20), height=400, template="plotly_dark", showlegend=False,
+        margin=dict(l=20, r=20, t=30, b=20), height=400, template=_get_template(), showlegend=False,
     )
     return fig
 
@@ -67,7 +71,7 @@ def pie_fig(df, group_col: str, title: str):
     )])
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        title_text=title, template="plotly_dark", height=380,
+        title_text=title, template=_get_template(), height=380,
         margin=dict(l=0, r=0, t=40, b=10),
         showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)),
     )
@@ -87,9 +91,9 @@ def planner_fig(a_l, c_v_l, v_f_l):
         name="Interesse Composto", hovertemplate="%{y:,.2f} €",
     ))
     fig.update_layout(
-        template="plotly_dark", height=380, margin=dict(l=0, r=0, t=30, b=10),
+        template=_get_template(), height=380, margin=dict(l=0, r=0, t=30, b=10),
         hovermode="x unified",
-        hoverlabel=dict(bgcolor="rgba(30, 30, 30, 0.95)", font_size=14, bordercolor="#555"),
+        hoverlabel=dict(font_size=14),
         xaxis=dict(spikedash="solid", spikemode="across", showspikes=True, spikethickness=1),
     )
     return fig

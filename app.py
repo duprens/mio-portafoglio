@@ -7,9 +7,11 @@ from styles import apply as apply_styles
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
 # ---- Configurazione Tema ----
-if "theme" not in st.session_state:
-    st.session_state.theme = "Grigio Fumo"
-apply_styles(st.session_state.theme)
+# Leggiamo il tema dai parametri o usiamo il default per la prima esecuzione
+# st.set_page_config (dentro apply_styles) DEVE essere la prima chiamata Streamlit
+current_theme = st.session_state.get("theme", "Grigio Fumo")
+apply_styles(current_theme)
+if "theme" not in st.session_state: st.session_state.theme = current_theme
 
 from security import assert_encryption_key
 from auth import gate, logout_button

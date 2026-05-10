@@ -1,24 +1,16 @@
 import logging
 import streamlit as st
-from styles import PAGE_CONFIG, apply as apply_styles
-
-# Configurazione obbligatoria come PRIMA istruzione Streamlit
-st.set_page_config(**PAGE_CONFIG)
-
 import pandas as pd
 
-logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
-
-# ---- Configurazione Tema ----
-current_theme = st.session_state.get("theme", "Grigio Fumo")
-apply_styles(current_theme)
-if "theme" not in st.session_state: st.session_state.theme = current_theme
-
+from styles import apply as apply_styles
 from security import assert_encryption_key
 from auth import gate, logout_button
 import data
-from portfolio_viz import colora, candele_fig, pie_fig, planner_fig
+from charts import colora, candele_fig, pie_fig, planner_fig
 
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
+
+apply_styles()
 assert_encryption_key()
 
 user_email = gate()
@@ -94,15 +86,6 @@ if st.session_state.cliente_selezionato in st.session_state.clienti_database:
             rimanenti = list(st.session_state.clienti_database.keys())
             st.session_state.cliente_selezionato = rimanenti[0] if rimanenti else ""
             st.rerun()
-
-st.sidebar.divider()
-with st.sidebar.expander("🎨 Tema App"):
-    from styles import THEMES
-    current_theme_index = list(THEMES.keys()).index(st.session_state.theme)
-    tema_scelto = st.selectbox("Scegli un'atmosfera", list(THEMES.keys()), index=current_theme_index)
-    if tema_scelto != st.session_state.theme:
-        st.session_state.theme = tema_scelto
-        st.rerun()
 
 # ==========================================
 # DASHBOARD
@@ -198,10 +181,6 @@ if st.session_state.cliente_selezionato:
 
         edited_df = st.data_editor(
             styled_df, width="stretch", hide_index=True, num_rows="fixed",
-            column_config={
-                "Quantità": st.column_config.NumberColumn(step=1, format="%.4f"),
-                "PMC": st.column_config.NumberColumn(step=1, format="%.2f"),
-            },
             disabled=["Ultimo Prezzo", "Ribilanc. (Pz)", "Var. €", "Var. %", "Controvalore", "Peso %"],
             height=(len(df_sorted) + 1) * 35 + 10,
         )
@@ -242,9 +221,9 @@ if st.session_state.cliente_selezionato:
             c_t, c_n, c_q = st.columns(3)
             new_t = c_t.text_input("Ticker")
             new_n = c_n.text_input("Strumento (Nome)")
-            new_q = c_q.number_input("Quantità", min_value=0.0, step=1.0, format="%.4f")
+            new_q = c_q.number_input("Quantità", min_value=0.0, format="%.4f")
             c_p, c_as, c_ar, c_v = st.columns(4)
-            new_p = c_p.number_input("PMC", min_value=0.0, step=1.0, format="%.2f")
+            new_p = c_p.number_input("PMC", min_value=0.0, format="%.2f")
             new_as = c_as.selectbox("Asset Class", ["Azionario", "Obbligazionario", "Monetario", "Commodity", "Crypto", "Bilanciato", "Immobiliare", "Altro"])
             new_ar = c_ar.selectbox("Area Geografica", ["USA", "Europa", "Emergenti", "Globale", "Pacifico", "Altro"])
             new_v = c_v.selectbox("Valuta", ["EUR", "USD", "Altro"])

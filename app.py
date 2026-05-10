@@ -93,7 +93,8 @@ if st.session_state.cliente_selezionato in st.session_state.clienti_database:
 st.sidebar.divider()
 with st.sidebar.expander("🎨 Tema App"):
     from styles import THEMES
-    tema_scelto = st.selectbox("Scegli un'atmosfera", list(THEMES.keys()), index=list(THEMES.keys()).index(st.session_state.theme))
+    current_theme_index = list(THEMES.keys()).index(st.session_state.theme)
+    tema_scelto = st.selectbox("Scegli un'atmosfera", list(THEMES.keys()), index=current_theme_index)
     if tema_scelto != st.session_state.theme:
         st.session_state.theme = tema_scelto
         st.rerun()

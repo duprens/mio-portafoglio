@@ -13,16 +13,6 @@ logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(m
 apply_styles()
 assert_encryption_key()
 
-# Custom CSS per rendere il selettore timeframe (D/W) a forma di pillola
-st.markdown("""
-    <style>
-    div[data-testid="stSegmentedControl"] button {
-        border-radius: 20px !important;
-        margin: 0 2px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 user_email = gate()
 
 user_sheet_link = data.get_user_link(user_email)
@@ -47,7 +37,6 @@ if "cliente_selezionato" not in st.session_state:
 
 if "timeframe_scelta" not in st.session_state:
     st.session_state.timeframe_scelta = "D"
-    st.session_state.timeframe_control = "D"
 
 # ---- Prezzi ----
 tutti_i_tickers = set()
@@ -68,14 +57,14 @@ for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.spl
     valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])
     costo_tot = sum(i["PMC"] * i["Quantità"] for i in st.session_state.clienti_database[nome])
     var_p = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
+    # Icona di stato: verde su per variazioni positive, rossa giù per negative
+    icona = "🟢 ▲" if var_p > 0 else ("🔴 ▼" if var_p < 0 else "⚪")
     if st.sidebar.button(
-        f"{nome} | {var_p:+.2f}%",
+        f"{icona} {nome} | {var_p:+.2f}%",
         width="stretch",
         type="primary" if st.session_state.cliente_selezionato == nome else "secondary",
     ):
-        st.session_state.cliente_selezionato = nome
-        st.session_state.timeframe_scelta = "D"
-        st.session_state.timeframe_control = "D"
+        st.session_state.cliente_selezionato, st.session_state.timeframe_scelta = nome, "D"
         st.rerun()
 
 st.sidebar.divider()
@@ -86,8 +75,6 @@ with st.sidebar.expander("➕ Nuovo Cliente"):
         st.session_state.date_inizio_clienti[nc_nome] = nc_data.strftime("%Y-%m-%d")
         salva()
         st.session_state.cliente_selezionato = nc_nome
-        st.session_state.timeframe_scelta = "D"
-        st.session_state.timeframe_control = "D"
         st.rerun()
 
 if st.session_state.cliente_selezionato in st.session_state.clienti_database:
@@ -98,8 +85,6 @@ if st.session_state.cliente_selezionato in st.session_state.clienti_database:
             salva()
             rimanenti = list(st.session_state.clienti_database.keys())
             st.session_state.cliente_selezionato = rimanenti[0] if rimanenti else ""
-            st.session_state.timeframe_scelta = "D"
-            st.session_state.timeframe_control = "D"
             st.rerun()
 
 # ==========================================
@@ -235,10 +220,10 @@ if st.session_state.cliente_selezionato:
         with st.expander("➕ Nuovo Strumento"):
             c_t, c_n, c_q = st.columns(3)
             new_t = c_t.text_input("Ticker")
-            new_n = c_n.text_input("Strumento")
-            new_q = c_q.number_input("Quantità", min_value=0.0, format="%.4f", step=1.0)
+            new_n = c_n.text_input("Strumento (Nome)")
+            new_q = c_q.number_input("Quantità", min_value=0.0, format="%.4f")
             c_p, c_as, c_ar, c_v = st.columns(4)
-            new_p = c_p.number_input("PMC", min_value=0.0, format="%.2f", step=1.0)
+            new_p = c_p.number_input("PMC", min_value=0.0, format="%.2f")
             new_as = c_as.selectbox("Asset Class", ["Azionario", "Obbligazionario", "Monetario", "Commodity", "Crypto", "Bilanciato", "Immobiliare", "Altro"])
             new_ar = c_ar.selectbox("Area Geografica", ["USA", "Europa", "Emergenti", "Globale", "Pacifico", "Altro"])
             new_v = c_v.selectbox("Valuta", ["EUR", "USD", "Altro"])

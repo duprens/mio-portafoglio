@@ -52,11 +52,18 @@ section[data-testid="stSidebar"] [data-testid="element-container"]:has(#logout-b
 }
 
 /* LA PILLOLA PERFETTA per D e W */
+/* selettore specifico via anchor, se supportato */
 div[data-testid="stHorizontalBlock"]:has(#pill-anchor) { gap: 0px !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(1), div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(2) { width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: none !important; padding: 0 !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) button { min-height: 28px !important; height: 28px !important; padding: 0 !important; margin: 0 !important; border-radius: 0 !important; font-size: 13px !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(1) button { border-top-left-radius: 6px !important; border-bottom-left-radius: 6px !important; border-right: none !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(2) button { border-top-right-radius: 6px !important; border-bottom-right-radius: 6px !important; }
+div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(1), div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(2) { width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: none !important; padding: 0 !important; overflow: hidden !important; }
+div[data-testid="stHorizontalBlock"]:has(#pill-anchor) button { min-height: 28px !important; height: 28px !important; padding: 0 !important; margin: 0 !important; border-radius: 999px !important; font-size: 13px !important; }
+div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(1) button { border-top-left-radius: 999px !important; border-bottom-left-radius: 999px !important; border-right: none !important; }
+div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(2) button { border-top-right-radius: 999px !important; border-bottom-right-radius: 999px !important; }
+
+/* fallback più ampio per i due primi toggle buttons della riga */
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1), div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) { width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: none !important; padding: 0 !important; overflow: hidden !important; }
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) button, div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) button { min-height: 28px !important; height: 28px !important; padding: 0 !important; margin: 0 !important; border-radius: 999px !important; font-size: 13px !important; }
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) button { border-top-left-radius: 999px !important; border-bottom-left-radius: 999px !important; border-right: none !important; }
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) button { border-top-right-radius: 999px !important; border-bottom-right-radius: 999px !important; }
 span#pill-anchor { display: none !important; }
 </style>
 """

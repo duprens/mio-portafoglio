@@ -18,7 +18,7 @@ PASS_COL = "PasswordHash"
 
 @st.cache_resource(show_spinner=False)
 def _conn():
-    return st.connection("gsheets", type=GSheetsConnection, show_toast=False)
+    return st.connection("gsheets", type=GSheetsConnection)
 
 
 # ----- Rubrica -----

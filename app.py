@@ -13,6 +13,16 @@ logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(m
 apply_styles()
 assert_encryption_key()
 
+# Custom CSS per rendere il selettore timeframe (D/W) a forma di pillola
+st.markdown("""
+    <style>
+    div[data-testid="stSegmentedControl"] button {
+        border-radius: 20px !important;
+        margin: 0 2px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 user_email = gate()
 
 user_sheet_link = data.get_user_link(user_email)
@@ -130,17 +140,15 @@ if st.session_state.cliente_selezionato:
     st.divider()
 
     # Pillola D / W
-    col_d, col_w, col_vuota = st.columns([1, 1, 20])
-    with col_d:
-        if st.button("D", type="primary" if st.session_state.timeframe_scelta == "D" else "secondary", width="stretch"):
-            st.session_state.timeframe_scelta = "D"
-            st.rerun()
-    with col_w:
-        if st.button("W", type="primary" if st.session_state.timeframe_scelta == "W" else "secondary", width="stretch"):
-            st.session_state.timeframe_scelta = "W"
-            st.rerun()
-    with col_vuota:
-        st.markdown('<span id="pill-anchor"></span>', unsafe_allow_html=True)
+    timeframe = st.segmented_control(
+        label="", 
+        options=["D", "W"], 
+        default=st.session_state.timeframe_scelta,
+        key="timeframe_control"
+    )
+    if timeframe != st.session_state.timeframe_scelta:
+        st.session_state.timeframe_scelta = timeframe
+        st.rerun()
 
     if not df.empty:
         tf_da_usare = "1d" if st.session_state.timeframe_scelta == "D" else "1wk"

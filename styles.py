@@ -1,12 +1,12 @@
 import streamlit as st
 
 THEMES = {
-    "Grigio Fumo": {"main": "#555555", "hover": "#666666", "rgb": "130, 130, 130"},
-    "Azzurro Cielo": {"main": "#a2c2e1", "hover": "#b9d1e9", "rgb": "162, 194, 225"},
-    "Arancio Pesca": {"main": "#f4d1a6", "hover": "#f8e1c7", "rgb": "244, 209, 166"},
-    "Giallo Sabbia": {"main": "#ece2c6", "hover": "#f2ebd9", "rgb": "236, 226, 198"},
-    "Verde Acqua": {"main": "#b2d8d8", "hover": "#c9e5e5", "rgb": "178, 216, 216"},
-    "Violetto Lavanda": {"main": "#d1d1f0", "hover": "#e2e2f7", "rgb": "209, 209, 240"}
+    "Grigio Fumo": {"main": "#555555", "hover": "#666666", "rgb": "130, 130, 130", "bg": "#0e1117", "sidebar": "#1e2127", "text": "#fafafa"},
+    "Azzurro Cielo": {"main": "#5dade2", "hover": "#85c1e9", "rgb": "93, 173, 226", "bg": "#f0f8ff", "sidebar": "#d6eaf8", "text": "#1b2631"},
+    "Arancio Pesca": {"main": "#edbb99", "hover": "#f5cba7", "rgb": "237, 187, 153", "bg": "#fffaf0", "sidebar": "#fae5d3", "text": "#2e1a05"},
+    "Giallo Sabbia": {"main": "#f7dc6f", "hover": "#f8e28b", "rgb": "247, 220, 111", "bg": "#fefdf0", "sidebar": "#fcf3cf", "text": "#1d1d1d"},
+    "Verde Acqua": {"main": "#76d7c4", "hover": "#a3e4d7", "rgb": "118, 215, 196", "bg": "#f4fdfb", "sidebar": "#d1f2eb", "text": "#0e2f2f"},
+    "Violetto Lavanda": {"main": "#bb8fce", "hover": "#d2b4de", "rgb": "187, 143, 206", "bg": "#fbf9ff", "sidebar": "#ebdef0", "text": "#211a23"}
 }
 
 PAGE_CONFIG = dict(layout="wide", page_title="Monitoraggio Portafogli", page_icon="📈")
@@ -67,10 +67,13 @@ section[data-testid="stSidebar"] [data-testid="element-container"]:has(#logout-b
 
 def apply(theme_name="Grigio Fumo"):
     conf = THEMES.get(theme_name, THEMES["Grigio Fumo"])
-    p, h, r = conf["main"], conf["hover"], conf["rgb"]
-
-    # Iniettiamo i colori del tema nel CSS sostituendo i valori statici
-    themed_css = CSS.replace("#555555", p).replace("#666666", h).replace("130, 130, 130", r)
+    
+    themed_css = CSS.replace("[[MAIN]]", conf["main"]) \
+                    .replace("[[HOVER]]", conf["hover"]) \
+                    .replace("[[RGB]]", conf["rgb"]) \
+                    .replace("[[BG]]", conf["bg"]) \
+                    .replace("[[SIDEBAR]]", conf["sidebar"]) \
+                    .replace("[[TEXT]]", conf["text"])
 
     st.set_page_config(**PAGE_CONFIG)
     st.markdown(themed_css, unsafe_allow_html=True)

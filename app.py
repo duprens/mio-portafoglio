@@ -3,10 +3,6 @@ import streamlit as st
 import pandas as pd
 
 from styles import apply as apply_styles
-from security import assert_encryption_key
-from auth import gate, logout_button
-import data
-from charts import colora, candele_fig, pie_fig, planner_fig
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -14,6 +10,12 @@ logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(m
 if "theme" not in st.session_state:
     st.session_state.theme = "Grigio Fumo"
 apply_styles(st.session_state.theme)
+
+from security import assert_encryption_key
+from auth import gate, logout_button
+import data
+from portfolio_viz import colora, candele_fig, pie_fig, planner_fig
+
 assert_encryption_key()
 
 user_email = gate()

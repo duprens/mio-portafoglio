@@ -3,21 +3,14 @@ import streamlit as st
 import pandas as pd
 
 from styles import apply as apply_styles
-
-logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
-
-# ---- Configurazione Tema ----
-# Leggiamo il tema dai parametri o usiamo il default per la prima esecuzione
-# st.set_page_config (dentro apply_styles) DEVE essere la prima chiamata Streamlit
-current_theme = st.session_state.get("theme", "Grigio Fumo")
-apply_styles(current_theme)
-if "theme" not in st.session_state: st.session_state.theme = current_theme
-
 from security import assert_encryption_key
 from auth import gate, logout_button
 import data
-from portfolio_viz import colora, candele_fig, pie_fig, planner_fig
+from charts import colora, candele_fig, pie_fig, planner_fig
 
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
+
+apply_styles()
 assert_encryption_key()
 
 user_email = gate()
@@ -93,15 +86,6 @@ if st.session_state.cliente_selezionato in st.session_state.clienti_database:
             rimanenti = list(st.session_state.clienti_database.keys())
             st.session_state.cliente_selezionato = rimanenti[0] if rimanenti else ""
             st.rerun()
-
-st.sidebar.divider()
-with st.sidebar.expander("🎨 Tema App"):
-    from styles import THEMES
-    current_theme_index = list(THEMES.keys()).index(st.session_state.theme)
-    tema_scelto = st.selectbox("Scegli un'atmosfera", list(THEMES.keys()), index=current_theme_index)
-    if tema_scelto != st.session_state.theme:
-        st.session_state.theme = tema_scelto
-        st.rerun()
 
 # ==========================================
 # DASHBOARD

@@ -1,14 +1,15 @@
 import logging
 import streamlit as st
-import pandas as pd
+from styles import PAGE_CONFIG, apply as apply_styles
 
-from styles import apply as apply_styles
+# Configurazione obbligatoria come PRIMA istruzione Streamlit
+st.set_page_config(**PAGE_CONFIG)
+
+import pandas as pd
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
 # ---- Configurazione Tema ----
-# Leggiamo il tema dai parametri o usiamo il default per la prima esecuzione
-# st.set_page_config (dentro apply_styles) DEVE essere la prima chiamata Streamlit
 current_theme = st.session_state.get("theme", "Grigio Fumo")
 apply_styles(current_theme)
 if "theme" not in st.session_state: st.session_state.theme = current_theme

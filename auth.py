@@ -15,6 +15,7 @@ SESSION_TIMEOUT_SECONDS = 30 * 60
 _VOLATILE_KEYS = (
     "manual_email", "login_time",
     "db_caricato", "clienti_database", "date_inizio_clienti", "cliente_selezionato",
+    "timeframe_scelta", "timeframe_control",
 )
 
 

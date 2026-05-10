@@ -235,7 +235,7 @@ if st.session_state.cliente_selezionato:
         with st.expander("➕ Nuovo Strumento"):
             c_t, c_n, c_q = st.columns(3)
             new_t = c_t.text_input("Ticker")
-            new_n = c_n.text_input("Strumento (Nome)")
+            new_n = c_n.text_input("Strumento")
             new_q = c_q.number_input("Quantità", min_value=0.0, format="%.4f", step=1.0)
             c_p, c_as, c_ar, c_v = st.columns(4)
             new_p = c_p.number_input("PMC", min_value=0.0, format="%.2f", step=1.0)

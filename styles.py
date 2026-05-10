@@ -1,22 +1,21 @@
 import streamlit as st
 
+THEMES = {
+    "Grigio Fumo": {"main": "#555555", "hover": "#666666", "rgb": "130, 130, 130"},
+    "Azzurro Cielo": {"main": "#a2c2e1", "hover": "#b9d1e9", "rgb": "162, 194, 225"},
+    "Arancio Pesca": {"main": "#f4d1a6", "hover": "#f8e1c7", "rgb": "244, 209, 166"},
+    "Giallo Sabbia": {"main": "#ece2c6", "hover": "#f2ebd9", "rgb": "236, 226, 198"},
+    "Verde Acqua": {"main": "#b2d8d8", "hover": "#c9e5e5", "rgb": "178, 216, 216"},
+    "Violetto Lavanda": {"main": "#d1d1f0", "hover": "#e2e2f7", "rgb": "209, 209, 240"}
+}
+
 PAGE_CONFIG = dict(layout="wide", page_title="Monitoraggio Portafogli", page_icon="📈")
 
 CSS = """
 <style>
 .stAppDeployButton {display:none;}
-/* Nasconde TUTTI gli indicatori di caricamento di Streamlit */
-div[data-testid="stStatusWidget"],
-[data-testid="stStatusWidget"],
-[data-testid="stToolbarActions"] [role="status"],
-[data-testid="stToast"],
-[data-testid="stToastContainer"],
-.stToast,
-[data-testid="stSpinner"],
-.stSpinner,
-div[data-testid="stHeader"] [role="status"],
-header[data-testid="stHeader"] [class*="StatusWidget"],
-header[data-testid="stHeader"] [class*="status"] { visibility: hidden !important; display: none !important; opacity: 0 !important; pointer-events: none !important; }
+/* Nasconde il widget di stato "Running..." in alto a destra */
+div[data-testid="stStatusWidget"] { visibility: hidden; display: none !important; }
 /* Slider: esorcismo definitivo del rosso su traccia, pallino e label numerica */
 div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] { background-color: #888888 !important; border-color: #888888 !important; box-shadow: none !important; }
 div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div > div > div { background-color: #555555 !important; }
@@ -61,17 +60,17 @@ section[data-testid="stSidebar"] [data-testid="element-container"]:has(#logout-b
     z-index: 999 !important;
 }
 
-/* LA PILLOLA PERFETTA per D e W */
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) { gap: 0px !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(1), div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(2) { width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: none !important; padding: 0 !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) button { min-height: 28px !important; height: 28px !important; padding: 0 !important; margin: 0 !important; border-radius: 0 !important; font-size: 13px !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(1) button { border-top-left-radius: 6px !important; border-bottom-left-radius: 6px !important; border-right: none !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(2) button { border-top-right-radius: 6px !important; border-bottom-right-radius: 6px !important; }
-span#pill-anchor { display: none !important; }
+
 </style>
 """
 
 
-def apply():
+def apply(theme_name="Grigio Fumo"):
+    conf = THEMES.get(theme_name, THEMES["Grigio Fumo"])
+    p, h, r = conf["main"], conf["hover"], conf["rgb"]
+
+    # Iniettiamo i colori del tema nel CSS sostituendo i valori statici
+    themed_css = CSS.replace("#555555", p).replace("#666666", h).replace("130, 130, 130", r)
+
     st.set_page_config(**PAGE_CONFIG)
-    st.markdown(CSS, unsafe_allow_html=True)
+    st.markdown(themed_css, unsafe_allow_html=True)

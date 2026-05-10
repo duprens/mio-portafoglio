@@ -10,7 +10,10 @@ from charts import colora, candele_fig, pie_fig, planner_fig
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
-apply_styles()
+# ---- Configurazione Tema ----
+if "theme" not in st.session_state:
+    st.session_state.theme = "Grigio Fumo"
+apply_styles(st.session_state.theme)
 assert_encryption_key()
 
 user_email = gate()
@@ -86,6 +89,14 @@ if st.session_state.cliente_selezionato in st.session_state.clienti_database:
             rimanenti = list(st.session_state.clienti_database.keys())
             st.session_state.cliente_selezionato = rimanenti[0] if rimanenti else ""
             st.rerun()
+
+st.sidebar.divider()
+with st.sidebar.expander("🎨 Tema App"):
+    from styles import THEMES
+    tema_scelto = st.selectbox("Scegli un'atmosfera", list(THEMES.keys()), index=list(THEMES.keys()).index(st.session_state.theme))
+    if tema_scelto != st.session_state.theme:
+        st.session_state.theme = tema_scelto
+        st.rerun()
 
 # ==========================================
 # DASHBOARD

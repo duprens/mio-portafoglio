@@ -55,6 +55,9 @@ def pie_fig(df, group_col: str, title: str):
     tot = df_g["Controvalore"].sum()
     df_g["Legenda"] = df_g.apply(lambda r: _allinea_legenda(r, tot, group_col), axis=1)
 
+    # Determina il colore della linea di separazione basandosi sul tema
+    line_color = "#1e1e1e" if st.session_state.get("theme") == "Grigio Fumo" else "#ffffff"
+
     fig = go.Figure(data=[go.Pie(
         labels=df_g["Legenda"],
         values=df_g["Controvalore"],
@@ -65,7 +68,7 @@ def pie_fig(df, group_col: str, title: str):
         hovertemplate="%{customdata}<extra></extra>",
         hole=.4, sort=False, textinfo="none",
         domain=dict(x=[0, 0.5]),
-        marker=dict(colors=COLORI_TORTA, line=dict(color="#1e1e1e", width=2)),
+        marker=dict(colors=COLORI_TORTA, line=dict(color=line_color, width=2)),
     )])
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",

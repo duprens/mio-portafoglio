@@ -146,7 +146,9 @@ if st.session_state.cliente_selezionato:
         tf_da_usare = "1d" if st.session_state.timeframe_scelta == "D" else "1wk"
         dati_c = data.fetch_candele(list(set(i["Ticker"] for i in ptf_c)), ptf_c, d_inizio, tf_da_usare)
         if dati_c is not None:
-            st.plotly_chart(candele_fig(dati_c, costo_totale_pmc), width="stretch")
+            fig_candele = candele_fig(dati_c, costo_totale_pmc)
+            fig_candele.update_layout(yaxis_title=None)
+            st.plotly_chart(fig_candele, width="stretch")
 
     st.divider()
 

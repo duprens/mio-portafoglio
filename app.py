@@ -57,10 +57,8 @@ for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.spl
     valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])
     costo_tot = sum(i["PMC"] * i["Quantità"] for i in st.session_state.clienti_database[nome])
     var_p = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
-    # Freccia di stato: su per variazioni positive, giù per negative
-    freccia = "▲" if var_p > 0 else ("▼" if var_p < 0 else "")
     if st.sidebar.button(
-        f"{nome} | {var_p:+.2f}% {freccia}".strip(),
+        f"{nome} | {var_p:+.2f}%",
         width="stretch",
         type="primary" if st.session_state.cliente_selezionato == nome else "secondary",
     ):
@@ -220,10 +218,10 @@ if st.session_state.cliente_selezionato:
         with st.expander("➕ Nuovo Strumento"):
             c_t, c_n, c_q = st.columns(3)
             new_t = c_t.text_input("Ticker")
-            new_n = c_n.text_input("Strumento (Nome)")
-            new_q = c_q.number_input("Quantità", min_value=0.0, format="%.4f")
+            new_n = c_n.text_input("Strumento")
+            new_q = c_q.number_input("Quantità", min_value=0.0, step=1.0, format="%.4f")
             c_p, c_as, c_ar, c_v = st.columns(4)
-            new_p = c_p.number_input("PMC", min_value=0.0, format="%.2f")
+            new_p = c_p.number_input("PMC", min_value=0.0, step=1.0, format="%.2f")
             new_as = c_as.selectbox("Asset Class", ["Azionario", "Obbligazionario", "Monetario", "Commodity", "Crypto", "Bilanciato", "Immobiliare", "Altro"])
             new_ar = c_ar.selectbox("Area Geografica", ["USA", "Europa", "Emergenti", "Globale", "Pacifico", "Altro"])
             new_v = c_v.selectbox("Valuta", ["EUR", "USD", "Altro"])

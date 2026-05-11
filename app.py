@@ -57,8 +57,9 @@ for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.spl
     valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])
     costo_tot = sum(i["PMC"] * i["Quantità"] for i in st.session_state.clienti_database[nome])
     var_p = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
+    freccia = "↑" if var_p > 0 else "↓" if var_p < 0 else ""
     if st.sidebar.button(
-        f"{nome} | {var_p:+.2f}%",
+        f"{nome} | {var_p:+.2f}% {freccia}",
         width="stretch",
         type="primary" if st.session_state.cliente_selezionato == nome else "secondary",
     ):

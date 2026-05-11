@@ -36,7 +36,7 @@ if "cliente_selezionato" not in st.session_state:
     st.session_state.cliente_selezionato = lista_cl[0] if lista_cl else ""
 
 if "timeframe_scelta" not in st.session_state:
-    st.session_state.timeframe_scelta = "D"
+    st.session_state.timeframe_scelta, st.session_state.timeframe_control = "D", "D"
 
 # ---- Prezzi ----
 tutti_i_tickers = set()
@@ -63,7 +63,7 @@ for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.spl
         width="stretch",
         type="primary" if st.session_state.cliente_selezionato == nome else "secondary",
     ):
-        st.session_state.cliente_selezionato, st.session_state.timeframe_scelta = nome, "D"
+        st.session_state.cliente_selezionato, st.session_state.timeframe_scelta, st.session_state.timeframe_control = nome, "D", "D"
         st.rerun()
 
 st.sidebar.divider()
@@ -73,7 +73,7 @@ with st.sidebar.expander("➕ Nuovo Cliente"):
         st.session_state.clienti_database[nc_nome] = []
         st.session_state.date_inizio_clienti[nc_nome] = nc_data.strftime("%Y-%m-%d")
         salva()
-        st.session_state.cliente_selezionato = nc_nome
+        st.session_state.cliente_selezionato, st.session_state.timeframe_scelta, st.session_state.timeframe_control = nc_nome, "D", "D"
         st.rerun()
 
 if st.session_state.cliente_selezionato in st.session_state.clienti_database:
@@ -84,6 +84,7 @@ if st.session_state.cliente_selezionato in st.session_state.clienti_database:
             salva()
             rimanenti = list(st.session_state.clienti_database.keys())
             st.session_state.cliente_selezionato = rimanenti[0] if rimanenti else ""
+            st.session_state.timeframe_scelta, st.session_state.timeframe_control = "D", "D"
             st.rerun()
 
 # ==========================================

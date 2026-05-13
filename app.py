@@ -56,10 +56,32 @@ st.sidebar.markdown("<hr style='margin-top: -15px; margin-bottom: 15px; border: 
 for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.split()[-1]):
     valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])
     costo_tot = sum(i["PMC"] * i["Quantità"] for i in st.session_state.clienti_database[nome])
-    var_p = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
-    freccia = "↑" if var_p > 0 else "↓" if var_p < 0 else ""
+   var_p_total = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
+
+    # Calcola la variazione rispetto alla seduta precedente per la freccia
+    var_p_prev_session = 0.0
+    freccia = "—" # Freccia neutra di default
+
+    client_portfolio = st.session_state.clienti_database[nome]
+    client_start_date = st.session_state.date_inizio_clienti.get(nome, "2024-01-01")
+
+    if client_portfolio: # Solo se il portafoglio non è vuoto
+        tickers_for_client = list(set(i["Ticker"] for i in client_portfolio))
+        # Usiamo "1d" per la variazione giornaliera
+        dati_candele_client_sidebar = data.fetch_candele(tickers_for_client, client_portfolio, client_start_date, "1d")
+
+        if dati_candele_client_sidebar is not None and not dati_candele_client_sidebar.empty:
+            # Assicurati che ci siano almeno due punti dati per il confronto (oggi e ieri)
+            if len(dati_candele_client_sidebar) >= 2:
+                current_close = dati_candele_client_sidebar["Close"].iloc[-1]
+                previous_close = dati_candele_client_sidebar["Close"].iloc[-2]
+                if previous_close > 0: # Evita divisione per zero
+                    var_p_prev_session = ((current_close - previous_close) / previous_close * 100)
+
+    if var_p_prev_session > 0: freccia = "▲"
+    elif var_p_prev_session < 0: freccia = "▼"
     if st.sidebar.button(
-        f"{nome} | {var_p:+.2f}% {freccia}",
+        f"{nome} | {var_p_total:+.2f}% {freccia}",
         width="stretch",
         type="primary" if st.session_state.cliente_selezionato == nome else "secondary",
     ):

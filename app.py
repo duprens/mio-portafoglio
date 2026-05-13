@@ -56,7 +56,7 @@ st.sidebar.markdown("<hr style='margin-top: -15px; margin-bottom: 15px; border: 
 for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.split()[-1]):
     valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])
     costo_tot = sum(i["PMC"] * i["Quantità"] for i in st.session_state.clienti_database[nome])
-   var_p_total = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
+    var_p_total = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
 
     # Calcola la variazione rispetto alla seduta precedente per la freccia
     var_p_prev_session = 0.0

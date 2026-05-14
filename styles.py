@@ -1,24 +1,20 @@
 import streamlit as st
 
-PAGE_CONFIG = dict(layout="wide", page_title="Monitoraggio Portafogli", page_icon="🧐")
+PAGE_CONFIG = dict(layout="wide", page_title="Monitoraggio Portafogli", page_icon="📈")
 
 CSS = """
 <style>
 .stAppDeployButton {display:none;}
 /* Nasconde il widget di stato "Running..." in alto a destra */
 div[data-testid="stStatusWidget"] { visibility: hidden; display: none !important; }
-/* Slider: esorcismo definitivo del rosso su traccia, pallino e label numerica */
-div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] { background-color: #ffffff !important; border-color: #ffffff !important; box-shadow: none !important; } /* Pallino */
-div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div > div > div { background-color: #555555 !important; }
-/* Tratto riempito (linear-gradient inline) -> bianco */
-div[data-testid="stSlider"] div[data-baseweb="slider"] div[style*="linear-gradient"] {
-    background-color: #ffffff !important; /* Assicura colore di sfondo bianco */
-    background-image: none !important;    /* Rimuove qualsiasi gradiente */
-}
-/* Eventuali residui rossi inline (rgb(255,...)) -> bianco */
-div[data-testid="stSlider"] div[data-baseweb="slider"] div[style*="rgb(255"] { background-color: #ffffff !important; color: #ffffff !important; }
-/* Label numerica sopra al pallino -> bianco */
+
+/* Slider: Pallino, Striscia Piena e Numero in Bianco */
 div[data-testid="stSlider"] [data-testid="stThumbValue"] { color: #ffffff !important; }
+div[data-testid="stSlider"] [role="slider"] { background-color: #ffffff !important; border-color: #ffffff !important; box-shadow: none !important; }
+/* Target della striscia piena (sovrascrive il gradiente dinamico) */
+div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background"] { background: #ffffff !important; }
+/* Sfondo della traccia rimanente (quella vuota) per mantenere il contrasto */
+div[data-testid="stSlider"] [data-baseweb="slider"] > div > div > div > div { background-color: #444444 !important; }
 
 /* ESORCISMO UNIVERSALE DEL ROSSO */
 :root, .stApp { --primary-color: #555555 !important; --focus-ring-color: transparent !important; }

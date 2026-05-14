@@ -41,13 +41,14 @@ def pie_fig(df, group_col: str, title: str):
         Controvalore=("Controvalore", "sum"),
         Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x)),
     ).reset_index().sort_values(by="Controvalore", ascending=False)
+    tot = df_g["Controvalore"].sum() # Calculate total here for percentage in hovertemplate
 
     fig = go.Figure(data=[go.Pie(
         labels=df_g[group_col], # Usa la colonna originale per le etichette
         values=df_g["Controvalore"],
         customdata=df_g.apply(
-            # Hovertemplate rimane dettagliato
-            lambda r: f"<b>{r[group_col]}</b><br>Controvalore: {r['Controvalore']:,.2f} €<br><b>Strumenti:</b>{r['Strumenti']}",
+            # Hovertemplate con Controvalore, Peso % e Strumenti
+            lambda r: f"<b>{r[group_col]}</b><br>Controvalore: {r['Controvalore']:,.2f} €<br>Peso: {(r['Controvalore']/tot*100):.1f}%<br><b>Strumenti:</b>{r['Strumenti']}",
             axis=1,
         ),
         hovertemplate="%{customdata}<extra></extra>",
@@ -70,15 +71,21 @@ def pie_fig(df, group_col: str, title: str):
     )
     return fig, df_g # Restituisce anche il DataFrame raggruppato per la legenda esterna
 
-
-def format_legend_table(df_g: pd.DataFrame, group_col: str) -> pd.DataFrame:
+def format_legend_table(df_g: pd.DataFrame, group_col: str) -> tuple[pd.DataFrame, list[str]]:
     """Formatta il DataFrame raggruppato per la visualizzazione come tabella legenda."""
     tot = df_g["Controvalore"].sum()
     df_table = df_g[[group_col, "Controvalore"]].copy()
     df_table["Peso %"] = (df_table["Controvalore"] / tot * 100).round(1).astype(str) + "%"
     df_table["Controvalore"] = df_table["Controvalore"].apply(lambda x: f"{x:,.2f} €")
     df_table.rename(columns={group_col: "Categoria"}, inplace=True)
-    return df_table
+
+    # Add a 'Colore' column for styling
+    df_table.insert(0, "Colore", "●") # Using a bullet point as a placeholder
+
+    # Get the colors that will be used for these categories, in the order of df_table
+    colors_for_table = [COLORI_TORTA[i % len(COLORI_TORTA)] for i in range(len(df_table))]
+
+    return df_table, colors_for_table
 
 
 def planner_fig(a_l, c_v_l, v_f_l):

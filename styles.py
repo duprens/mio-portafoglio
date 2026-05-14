@@ -7,40 +7,18 @@ CSS = """
 .stAppDeployButton {display:none;}
 /* Nasconde il widget di stato "Running..." in alto a destra */
 div[data-testid="stStatusWidget"] { visibility: hidden; display: none !important; }
-
-/* --- FIX SLIDER BIANCO TOTALE --- */
-div[data-testid="stSlider"] { --primary-color: #ffffff !important; }
-
-/* 1. Numero anni sopra il pallino */
+/* Slider: pallino, traccia e label numerica -> BIANCO */
+div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] { background-color: #ffffff !important; border-color: #ffffff !important; box-shadow: none !important; }
+div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div > div > div { background-color: #ffffff !important; }
+/* Tratto riempito (linear-gradient inline) -> bianco */
+div[data-testid="stSlider"] div[data-baseweb="slider"] div[style*="linear-gradient"] { background: #ffffff !important; }
+/* Eventuali residui inline -> bianco */
+div[data-testid="stSlider"] div[data-baseweb="slider"] div[style*="rgb(255"] { background-color: #ffffff !important; color: #ffffff !important; }
+/* Label numerica sopra al pallino -> bianco */
 div[data-testid="stSlider"] [data-testid="stThumbValue"] { color: #ffffff !important; }
-
-/* 2. Input range - track e thumb per tutti i browser */
-input[type="range"] {
-  --slider-color: #ffffff !important;
-}
-input[type="range"]::-webkit-slider-track {
-  background: #ffffff !important;
-  border: none !important;
-  height: 8px !important;
-}
-input[type="range"]::-webkit-slider-thumb {
-  background: #ffffff !important;
-  border: 2px solid #ffffff !important;
-  box-shadow: none !important;
-}
-input[type="range"]::-moz-range-track {
-  background: #ffffff !important;
-  border: none !important;
-}
-input[type="range"]::-moz-range-thumb {
-  background: #ffffff !important;
-  border: 2px solid #ffffff !important;
-  box-shadow: none !important;
-}
-
-/* 3. Nasconde i numeri 1 e 40 agli estremi (anche al passaggio del mouse) */
-div[data-testid="stSlider"] [data-testid="stTickBarMin"],
-div[data-testid="stSlider"] [data-testid="stTickBarMax"] { display: none !important; visibility: hidden !important; }
+/* Nascondi completamente i tick labels (1, 40) */
+div[data-testid="stSlider"] div[role="presentation"] span { display: none !important; }
+div[data-testid="stSlider"] [data-baseweb="slider"] span { display: none !important; }
 
 /* ESORCISMO UNIVERSALE DEL ROSSO */
 :root, .stApp { --primary-color: #555555 !important; --focus-ring-color: transparent !important; }

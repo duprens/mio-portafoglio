@@ -93,12 +93,12 @@ def planner_fig(a_l, c_v_l, v_f_l):
     fig.add_trace(go.Scatter(
         x=a_l, y=c_v_l, mode="lines", line=dict(width=0),
         fillcolor="rgba(150, 150, 150, 0.3)", fill="tozeroy",
-        name="Capitale Versato", hovertemplate="%{y:,.2f} €",
+        name="Capitale Versato", hovertemplate="%{y:,.2f} €", showlegend=False,
     ))
     fig.add_trace(go.Scatter(
         x=a_l, y=v_f_l, mode="lines", line=dict(color="#00c853", width=3),
         fillcolor="rgba(0, 200, 83, 0.2)", fill="tonexty",
-        name="Interesse Composto", hovertemplate="%{y:,.2f} €",
+        name="Interesse Composto", hovertemplate="%{y:,.2f} €", showlegend=False,
     ))
     fig.update_layout(
         template="plotly_dark", height=380, margin=dict(l=0, r=0, t=30, b=10),

@@ -8,13 +8,18 @@ CSS = """
 /* Nasconde il widget di stato "Running..." in alto a destra */
 div[data-testid="stStatusWidget"] { visibility: hidden; display: none !important; }
 
-/* Slider: Pallino, Striscia Piena e Numero in Bianco */
-div[data-testid="stSlider"] [data-testid="stThumbValue"] { color: #ffffff !important; }
-div[data-testid="stSlider"] [role="slider"] { background-color: #ffffff !important; border-color: #ffffff !important; box-shadow: none !important; }
-/* Target della striscia piena (sovrascrive il gradiente dinamico) */
-div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="background"] { background: #ffffff !important; }
-/* Sfondo della traccia rimanente (quella vuota) per mantenere il contrasto */
-div[data-testid="stSlider"] [data-baseweb="slider"] > div > div > div > div { background-color: #444444 !important; }
+/* --- FIX SLIDER BIANCO TOTALE --- */
+/* 1. Numero sopra il pallino */
+div[data-testid="stSlider"] [data-testid="stThumbValue"] { color: white !important; }
+
+/* 2. Pallino (il cursore) */
+div[data-testid="stSlider"] [role="slider"] { background-color: white !important; border: 2px solid white !important; box-shadow: none !important; }
+
+/* 3. La striscia piena (progress bar) - Colpiamo il gradiente inline */
+div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="linear-gradient"] { background: white !important; }
+
+/* 4. La traccia di fondo (parte ancora vuota) - Grigio scuro per contrasto */
+div[data-testid="stSlider"] [data-baseweb="slider"] > div > div { background-color: #444444 !important; }
 
 /* ESORCISMO UNIVERSALE DEL ROSSO */
 :root, .stApp { --primary-color: #555555 !important; --focus-ring-color: transparent !important; }

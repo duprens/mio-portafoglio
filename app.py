@@ -5,8 +5,8 @@ import pandas as pd
 from styles import apply as apply_styles
 from security import assert_encryption_key
 from auth import gate, logout_button
-import data
-from charts import colora, candele_fig, pie_fig, planner_fig, format_legend_table
+import data # Import data module
+from charts import colora, candele_fig, pie_fig, planner_fig, format_legend_table, COLORI_TORTA # Import COLORI_TORTA
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -263,21 +263,34 @@ if st.session_state.cliente_selezionato:
     if not df.empty:
         c_pie1, c_pie2, c_pie3 = st.columns(3)
         
+        def create_color_styler(colors_list):
+            def style_func(row):
+                # row.name is the index of the current row in the DataFrame
+                color = colors_list[row.name % len(colors_list)] # Use modulo for safety if colors_list is shorter than df
+                styles = [''] * len(row)
+                # Assuming 'Colore' is the first column (index 0)
+                styles[0] = f"color: {color}; font-size: 20px; text-align: center;"
+                return styles
+            return style_func
+
         with c_pie1:
             with st.container(border=True):
                 fig_asset, df_asset_legend = pie_fig(df, "Asset", "Asset Allocation")
+                df_asset_table, asset_colors = format_legend_table(df_asset_legend, "Asset")
                 st.plotly_chart(fig_asset, use_container_width=True)
-                st.dataframe(format_legend_table(df_asset_legend, "Asset"), hide_index=True, use_container_width=True)
+                st.dataframe(df_asset_table.style.apply(create_color_styler(asset_colors), axis=1), hide_index=True, use_container_width=True)
         with c_pie2:
             with st.container(border=True):
                 fig_area, df_area_legend = pie_fig(df, "Area", "Esposizione Geografica")
+                df_area_table, area_colors = format_legend_table(df_area_legend, "Area")
                 st.plotly_chart(fig_area, use_container_width=True)
-                st.dataframe(format_legend_table(df_area_legend, "Area"), hide_index=True, use_container_width=True)
+                st.dataframe(df_area_table.style.apply(create_color_styler(area_colors), axis=1), hide_index=True, use_container_width=True)
         with c_pie3:
             with st.container(border=True):
                 fig_valuta, df_valuta_legend = pie_fig(df, "Valuta", "Esposizione Valutaria")
+                df_valuta_table, valuta_colors = format_legend_table(df_valuta_legend, "Valuta")
                 st.plotly_chart(fig_valuta, use_container_width=True)
-                st.dataframe(format_legend_table(df_valuta_legend, "Valuta"), hide_index=True, use_container_width=True)
+                st.dataframe(df_valuta_table.style.apply(create_color_styler(valuta_colors), axis=1), hide_index=True, use_container_width=True)
 
     # ----- Pianificatore -----
     if not df.empty:

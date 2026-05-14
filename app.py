@@ -6,7 +6,7 @@ from styles import apply as apply_styles
 from security import assert_encryption_key
 from auth import gate, logout_button
 import data
-from charts import colora, candele_fig, pie_fig, planner_fig
+from charts import colora, candele_fig, pie_fig, planner_fig, format_legend_table
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -36,7 +36,7 @@ if "cliente_selezionato" not in st.session_state:
     st.session_state.cliente_selezionato = lista_cl[0] if lista_cl else ""
 
 if "timeframe_scelta" not in st.session_state:
-    st.session_state.timeframe_scelta, st.session_state.timeframe_control = "D", "D"
+    st.session_state.timeframe_scelta = "D"
 
 # ---- Prezzi ----
 tutti_i_tickers = set()
@@ -56,36 +56,13 @@ st.sidebar.markdown("<hr style='margin-top: -15px; margin-bottom: 15px; border: 
 for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.split()[-1]):
     valore_tot = sum(prezzi_aggiornati.get(i["Ticker"], i["PMC"]) * i["Quantità"] for i in st.session_state.clienti_database[nome])
     costo_tot = sum(i["PMC"] * i["Quantità"] for i in st.session_state.clienti_database[nome])
-    var_p_total = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
-
-    # Calcola la variazione rispetto alla seduta precedente per la freccia
-    var_p_prev_session = 0.0
-    freccia = "—" # Freccia neutra di default
-
-    client_portfolio = st.session_state.clienti_database[nome]
-    client_start_date = st.session_state.date_inizio_clienti.get(nome, "2024-01-01")
-
-    if client_portfolio: # Solo se il portafoglio non è vuoto
-        tickers_for_client = list(set(i["Ticker"] for i in client_portfolio))
-        # Usiamo "1d" per la variazione giornaliera
-        dati_candele_client_sidebar = data.fetch_candele(tickers_for_client, client_portfolio, client_start_date, "1d")
-
-        if dati_candele_client_sidebar is not None and not dati_candele_client_sidebar.empty:
-            # Assicurati che ci siano almeno due punti dati per il confronto (oggi e ieri)
-            if len(dati_candele_client_sidebar) >= 2:
-                current_close = dati_candele_client_sidebar["Close"].iloc[-1]
-                previous_close = dati_candele_client_sidebar["Close"].iloc[-2]
-                if previous_close > 0: # Evita divisione per zero
-                    var_p_prev_session = ((current_close - previous_close) / previous_close * 100)
-
-    if var_p_prev_session > 0: freccia = "▲"
-    elif var_p_prev_session < 0: freccia = "▼"
+    var_p = ((valore_tot - costo_tot) / costo_tot * 100) if costo_tot > 0 else 0
     if st.sidebar.button(
-        f"{nome} | {var_p_total:+.2f}% {freccia}",
+        f"{nome} | {var_p:+.2f}%",
         width="stretch",
         type="primary" if st.session_state.cliente_selezionato == nome else "secondary",
     ):
-        st.session_state.cliente_selezionato, st.session_state.timeframe_scelta, st.session_state.timeframe_control = nome, "D", "D"
+        st.session_state.cliente_selezionato, st.session_state.timeframe_scelta = nome, "D"
         st.rerun()
 
 st.sidebar.divider()
@@ -95,7 +72,7 @@ with st.sidebar.expander("➕ Nuovo Cliente"):
         st.session_state.clienti_database[nc_nome] = []
         st.session_state.date_inizio_clienti[nc_nome] = nc_data.strftime("%Y-%m-%d")
         salva()
-        st.session_state.cliente_selezionato, st.session_state.timeframe_scelta, st.session_state.timeframe_control = nc_nome, "D", "D"
+        st.session_state.cliente_selezionato = nc_nome
         st.rerun()
 
 if st.session_state.cliente_selezionato in st.session_state.clienti_database:
@@ -106,7 +83,6 @@ if st.session_state.cliente_selezionato in st.session_state.clienti_database:
             salva()
             rimanenti = list(st.session_state.clienti_database.keys())
             st.session_state.cliente_selezionato = rimanenti[0] if rimanenti else ""
-            st.session_state.timeframe_scelta, st.session_state.timeframe_control = "D", "D"
             st.rerun()
 
 # ==========================================
@@ -168,9 +144,7 @@ if st.session_state.cliente_selezionato:
         tf_da_usare = "1d" if st.session_state.timeframe_scelta == "D" else "1wk"
         dati_c = data.fetch_candele(list(set(i["Ticker"] for i in ptf_c)), ptf_c, d_inizio, tf_da_usare)
         if dati_c is not None:
-            fig_candele = candele_fig(dati_c, costo_totale_pmc)
-            fig_candele.update_layout(yaxis_title=None)
-            st.plotly_chart(fig_candele, width="stretch")
+            st.plotly_chart(candele_fig(dati_c, costo_totale_pmc), width="stretch")
 
     st.divider()
 
@@ -244,10 +218,10 @@ if st.session_state.cliente_selezionato:
         with st.expander("➕ Nuovo Strumento"):
             c_t, c_n, c_q = st.columns(3)
             new_t = c_t.text_input("Ticker")
-            new_n = c_n.text_input("Strumento")
-            new_q = c_q.number_input("Quantità", min_value=0.0, step=1.0, format="%.4f")
+            new_n = c_n.text_input("Strumento (Nome)")
+            new_q = c_q.number_input("Quantità", min_value=0.0, format="%.4f")
             c_p, c_as, c_ar, c_v = st.columns(4)
-            new_p = c_p.number_input("PMC", min_value=0.0, step=1.0, format="%.2f")
+            new_p = c_p.number_input("PMC", min_value=0.0, format="%.2f")
             new_as = c_as.selectbox("Asset Class", ["Azionario", "Obbligazionario", "Monetario", "Commodity", "Crypto", "Bilanciato", "Immobiliare", "Altro"])
             new_ar = c_ar.selectbox("Area Geografica", ["USA", "Europa", "Emergenti", "Globale", "Pacifico", "Altro"])
             new_v = c_v.selectbox("Valuta", ["EUR", "USD", "Altro"])
@@ -266,15 +240,22 @@ if st.session_state.cliente_selezionato:
 
     if not df.empty:
         c_pie1, c_pie2, c_pie3 = st.columns(3)
+        
         with c_pie1:
             with st.container(border=True):
-                st.plotly_chart(pie_fig(df, "Asset", "Asset Allocation"), width="stretch")
+                fig_asset, df_asset_legend = pie_fig(df, "Asset", "Asset Allocation")
+                st.plotly_chart(fig_asset, use_container_width=True)
+                st.dataframe(format_legend_table(df_asset_legend, "Asset"), hide_index=True, use_container_width=True)
         with c_pie2:
             with st.container(border=True):
-                st.plotly_chart(pie_fig(df, "Area", "Esposizione Geografica"), width="stretch")
+                fig_area, df_area_legend = pie_fig(df, "Area", "Esposizione Geografica")
+                st.plotly_chart(fig_area, use_container_width=True)
+                st.dataframe(format_legend_table(df_area_legend, "Area"), hide_index=True, use_container_width=True)
         with c_pie3:
             with st.container(border=True):
-                st.plotly_chart(pie_fig(df, "Valuta", "Esposizione Valutaria"), width="stretch")
+                fig_valuta, df_valuta_legend = pie_fig(df, "Valuta", "Esposizione Valutaria")
+                st.plotly_chart(fig_valuta, use_container_width=True)
+                st.dataframe(format_legend_table(df_valuta_legend, "Valuta"), hide_index=True, use_container_width=True)
 
     # ----- Pianificatore -----
     if not df.empty:

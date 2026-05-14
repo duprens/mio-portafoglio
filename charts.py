@@ -80,7 +80,7 @@ def format_legend_table(df_g: pd.DataFrame, group_col: str) -> tuple[pd.DataFram
     df_table.rename(columns={group_col: "Categoria"}, inplace=True)
 
     # Add a 'Colore' column for styling
-    df_table.insert(0, "🌈", "●") # Using a bullet point as a placeholder
+    df_table.insert(0, "#", "●") # Using a bullet point as a placeholder
 
     # Get the colors that will be used for these categories, in the order of df_table
     colors_for_table = [COLORI_TORTA[i % len(COLORI_TORTA)] for i in range(len(df_table))]

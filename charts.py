@@ -69,7 +69,18 @@ def pie_fig(df, group_col: str, title: str):
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         title_text=title, template="plotly_dark", height=380,
         margin=dict(l=0, r=0, t=40, b=10),
-        showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)),
+        showlegend=True, 
+        legend=dict(
+            yanchor="middle", 
+            y=0.5, 
+            xanchor="right", 
+            x=1, 
+            font=dict(size=12),
+            bgcolor="rgba(255, 255, 255, 0.03)",
+            bordercolor="rgba(130, 130, 130, 0.2)",
+            borderwidth=1,
+            itemsizing="constant"
+        ),
     )
     return fig
 

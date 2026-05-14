@@ -9,17 +9,17 @@ CSS = """
 div[data-testid="stStatusWidget"] { visibility: hidden; display: none !important; }
 
 /* --- FIX SLIDER BIANCO TOTALE --- */
-/* 1. Numero sopra il pallino */
-div[data-testid="stSlider"] [data-testid="stThumbValue"] { color: white !important; }
+div[data-testid="stSlider"] { --primary-color: #ffffff !important; }
 
-/* 2. Pallino (il cursore) */
-div[data-testid="stSlider"] [role="slider"] { background-color: white !important; border: 2px solid white !important; box-shadow: none !important; }
+/* 1. Numero anni sopra il pallino */
+div[data-testid="stSlider"] [data-testid="stThumbValue"] { color: #ffffff !important; }
 
-/* 3. La striscia piena (progress bar) - Colpiamo il gradiente inline */
-div[data-testid="stSlider"] [data-baseweb="slider"] div[style*="linear-gradient"] { background: white !important; }
+/* 2. Pallino e Striscia Piena (usano la primary color definita sopra) */
+div[data-testid="stSlider"] [role="slider"] { background-color: #ffffff !important; border: 2px solid #ffffff !important; box-shadow: none !important; }
 
-/* 4. La traccia di fondo (parte ancora vuota) - Grigio scuro per contrasto */
-div[data-testid="stSlider"] [data-baseweb="slider"] > div > div { background-color: #444444 !important; }
+/* 3. Nasconde i numeri 1 e 40 agli estremi (anche al passaggio del mouse) */
+div[data-testid="stSlider"] [data-testid="stTickBarMin"], 
+div[data-testid="stSlider"] [data-testid="stTickBarMax"] { display: none !important; visibility: hidden !important; }
 
 /* ESORCISMO UNIVERSALE DEL ROSSO */
 :root, .stApp { --primary-color: #555555 !important; --focus-ring-color: transparent !important; }

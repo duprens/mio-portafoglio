@@ -295,8 +295,6 @@ if st.session_state.cliente_selezionato:
     # ----- Pianificatore -----
     if not df.empty:
         st.divider()
-        st.subheader("Pianificatore")
-        st.markdown("<p style='font-size: 14px; color: #a6a6a6;'>Simula l'andamento futuro. Inserisci il risparmio annuo stimato e scegli un profilo di rischio.</p>", unsafe_allow_html=True)
 
         with st.container(border=True):
             col_p1, col_p2, col_p3 = st.columns(3)

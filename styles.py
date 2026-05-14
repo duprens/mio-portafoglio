@@ -5,27 +5,17 @@ PAGE_CONFIG = dict(layout="wide", page_title="Monitoraggio Portafogli", page_ico
 CSS = """
 <style>
 .stAppDeployButton {display:none;}
-/* Nasconde TUTTI gli indicatori di caricamento di Streamlit */
-div[data-testid="stStatusWidget"],
-[data-testid="stStatusWidget"],
-[data-testid="stToolbarActions"] [role="status"],
-[data-testid="stToast"],
-[data-testid="stToastContainer"],
-.stToast,
-[data-testid="stSpinner"],
-.stSpinner,
-div[data-testid="stHeader"] [role="status"],
-header[data-testid="stHeader"] [class*="StatusWidget"],
-header[data-testid="stHeader"] [class*="status"] { visibility: hidden !important; display: none !important; opacity: 0 !important; pointer-events: none !important; }
+/* Nasconde il widget di stato "Running..." in alto a destra */
+div[data-testid="stStatusWidget"] { visibility: hidden; display: none !important; }
 /* Slider: esorcismo definitivo del rosso su traccia, pallino e label numerica */
-div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] { background-color: #888888 !important; border-color: #888888 !important; box-shadow: none !important; }
+div[data-testid="stSlider"] div[data-baseweb="slider"] div[role="slider"] { background-color: #ffffff !important; border-color: #ffffff !important; box-shadow: none !important; }
 div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div > div > div { background-color: #555555 !important; }
-/* Tratto riempito (linear-gradient inline) -> grigio */
-div[data-testid="stSlider"] div[data-baseweb="slider"] div[style*="linear-gradient"] { background: #888888 !important; }
-/* Eventuali residui rossi inline (rgb(255,...)) -> grigio */
-div[data-testid="stSlider"] div[data-baseweb="slider"] div[style*="rgb(255"] { background-color: #888888 !important; color: #fafafa !important; }
-/* Label numerica sopra al pallino -> bianco sporco */
-div[data-testid="stSlider"] [data-testid="stThumbValue"] { color: #fafafa !important; }
+/* Tratto riempito (linear-gradient inline) -> bianco */
+div[data-testid="stSlider"] div[data-baseweb="slider"] div[style*="linear-gradient"] { background: #ffffff !important; }
+/* Eventuali residui rossi inline (rgb(255,...)) -> bianco */
+div[data-testid="stSlider"] div[data-baseweb="slider"] div[style*="rgb(255"] { background-color: #ffffff !important; color: #ffffff !important; }
+/* Label numerica sopra al pallino -> bianco */
+div[data-testid="stSlider"] [data-testid="stThumbValue"] { color: #ffffff !important; }
 
 /* ESORCISMO UNIVERSALE DEL ROSSO */
 :root, .stApp { --primary-color: #555555 !important; --focus-ring-color: transparent !important; }
@@ -61,13 +51,7 @@ section[data-testid="stSidebar"] [data-testid="element-container"]:has(#logout-b
     z-index: 999 !important;
 }
 
-/* LA PILLOLA PERFETTA per D e W */
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) { gap: 0px !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(1), div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(2) { width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: none !important; padding: 0 !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) button { min-height: 28px !important; height: 28px !important; padding: 0 !important; margin: 0 !important; border-radius: 0 !important; font-size: 13px !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(1) button { border-top-left-radius: 6px !important; border-bottom-left-radius: 6px !important; border-right: none !important; }
-div[data-testid="stHorizontalBlock"]:has(#pill-anchor) > div[data-testid="column"]:nth-child(2) button { border-top-right-radius: 6px !important; border-bottom-right-radius: 6px !important; }
-span#pill-anchor { display: none !important; }
+
 </style>
 """
 

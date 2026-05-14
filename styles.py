@@ -14,11 +14,32 @@ div[data-testid="stSlider"] { --primary-color: #ffffff !important; }
 /* 1. Numero anni sopra il pallino */
 div[data-testid="stSlider"] [data-testid="stThumbValue"] { color: #ffffff !important; }
 
-/* 2. Pallino e Striscia Piena (usano la primary color definita sopra) */
-div[data-testid="stSlider"] [role="slider"] { background-color: #ffffff !important; border: 2px solid #ffffff !important; box-shadow: none !important; }
+/* 2. Input range - track e thumb per tutti i browser */
+input[type="range"] {
+  --slider-color: #ffffff !important;
+}
+input[type="range"]::-webkit-slider-track {
+  background: #ffffff !important;
+  border: none !important;
+  height: 8px !important;
+}
+input[type="range"]::-webkit-slider-thumb {
+  background: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: none !important;
+}
+input[type="range"]::-moz-range-track {
+  background: #ffffff !important;
+  border: none !important;
+}
+input[type="range"]::-moz-range-thumb {
+  background: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: none !important;
+}
 
 /* 3. Nasconde i numeri 1 e 40 agli estremi (anche al passaggio del mouse) */
-div[data-testid="stSlider"] [data-testid="stTickBarMin"], 
+div[data-testid="stSlider"] [data-testid="stTickBarMin"],
 div[data-testid="stSlider"] [data-testid="stTickBarMax"] { display: none !important; visibility: hidden !important; }
 
 /* ESORCISMO UNIVERSALE DEL ROSSO */

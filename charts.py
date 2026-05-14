@@ -62,13 +62,20 @@ def pie_fig(df, group_col: str, title: str):
         ),
         hovertemplate="%{customdata}<extra></extra>",
         hole=.65, sort=False, textinfo="none",
-        domain=dict(x=[0, 0.5]),
+        domain=dict(x=[0, 0.38]),
         marker=dict(colors=COLORI_TORTA, line=dict(color="#0e1117", width=3)),
     )])
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        title_text=title, template="plotly_dark", height=380,
-        margin=dict(l=0, r=0, t=40, b=10),
+        title=dict(
+            text=title,
+            x=0,
+            y=1,
+            xanchor="left",
+            yanchor="top"
+        ),
+        template="plotly_dark", height=380,
+        margin=dict(l=0, r=0, t=50, b=10),
         showlegend=True, 
         legend=dict(
             yanchor="middle", 

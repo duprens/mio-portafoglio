@@ -1,14 +1,6 @@
 import plotly.graph_objects as go
-import numpy as np
 
 COLORI_TORTA = ["#64B5F6", "#81C784", "#BA68C8", "#FFD54F", "#E57373", "#FFB74D", "#4DD0E1", "#F06292"]
-
-EMOJI_MAP = {
-    "Azionario": "📊", "Obbligazionario": "🧾", "Monetario": "💸", "Commodity": "🏗️",
-    "Crypto": "₿", "Bilanciato": "🌓", "Immobiliare": "🏘️", "Altro": "📦",
-    "USA": "🇺🇸", "Europa": "🇪🇺", "Emergenti": "🚀", "Globale": "🌍", "Pacifico": "🏝️",
-    "EUR": "💶", "USD": "💵"
-}
 
 
 def colora(val):
@@ -58,50 +50,46 @@ def pie_fig(df, group_col: str, title: str):
         Controvalore=("Controvalore", "sum"),
         Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x)),
     ).reset_index().sort_values(by="Controvalore", ascending=False)
+    tot = df_g["Controvalore"].sum()
+    df_g["Legenda"] = df_g.apply(lambda r: _allinea_legenda(r, tot, group_col), axis=1)
 
-    # Calcolo posizioni "pseudo-fluttuanti" (disposizione a spirale per evitare sovrapposizioni)
-    n = len(df_g)
-    indices = np.arange(n)
-    phi = indices * np.pi * (3 - np.sqrt(5))  # Angolo aureo
-    r = np.sqrt(indices) # Raggio crescente
-    x_pos = r * np.cos(phi)
-    y_pos = r * np.sin(phi)
-
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=x_pos, y=y_pos,
-        mode="markers+text",
-        text=df_g[group_col].map(lambda x: EMOJI_MAP.get(x, "📍")),
-        textposition="middle center",
-        textfont=dict(size=22, color="white"),
-        marker=dict(
-            size=df_g["Controvalore"],
-            sizemode='area',
-            sizeref=2. * df_g["Controvalore"].max() / (100**2), # Normalizzazione raggio bolle
-            sizemin=20,
-            color=COLORI_TORTA[:n],
-            line=dict(color="#0e1117", width=2),
-            opacity=0.9
-        ),
+    fig = go.Figure(data=[go.Pie(
+        labels=df_g["Legenda"],
+        values=df_g["Controvalore"],
         customdata=df_g.apply(
-            lambda r: f"<b>{r[group_col]}</b><br>Controvalore: {r['Controvalore']:,.2f} €<br><b>Strumenti:</b>{r['Strumenti']}",
+            lambda r: f"<b>{r[group_col]}</b><br>Totale: {r['Controvalore']:.2f} €<br><b>Strumenti:</b>{r['Strumenti']}",
             axis=1,
         ),
         hovertemplate="%{customdata}<extra></extra>",
-    ))
-
+        hole=.65, sort=False, textinfo="none",
+        domain=dict(x=[0, 1]),
+        marker=dict(colors=COLORI_TORTA, line=dict(color="#0e1117", width=3)),
+    )])
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        title=dict(text=title, x=0.5, y=0.98, xanchor="center", font=dict(size=18)),
+        title=dict(
+            text=title,
+            x=0.5,
+            y=1,
+            xanchor="center",
+            yanchor="top"
+        ),
         template="plotly_dark", height=450,
-        margin=dict(l=10, r=10, t=60, b=10),
-        showlegend=False,
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[min(x_pos)-1, max(x_pos)+1]),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[min(y_pos)-1, max(y_pos)+1]),
-        hovermode='closest'
+        margin=dict(l=10, r=10, t=50, b=80),
+        showlegend=True, 
+        legend=dict(
+            orientation="h",
+            yanchor="top", 
+            y=-0.1, 
+            xanchor="center", 
+            x=0.5, 
+            font=dict(size=12),
+            bgcolor="rgba(255, 255, 255, 0.03)",
+            bordercolor="rgba(130, 130, 130, 0.2)",
+            borderwidth=1,
+            itemsizing="constant"
+        ),
     )
-
     return fig
 
 

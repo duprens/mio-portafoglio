@@ -5,8 +5,8 @@ PAGE_CONFIG = dict(layout="wide", page_title="Monitoraggio Portafogli", page_ico
 CSS = """
 <style>
 .stAppDeployButton {display:none;}
-/* Nasconde il widget di stato "Running..." in alto a destra */
-div[data-testid="stStatusWidget"] { visibility: hidden; display: none !important; }
+/* Nasconde il widget di stato "Running..." e la linea di caricamento in alto */
+[data-testid="stStatusWidget"], [data-testid="stDecoration"] { visibility: hidden; display: none !important; }
 
 /* --- FIX SLIDER BIANCO TOTALE --- */
 div[data-testid="stSlider"] { --primary-color: #ffffff !important; }

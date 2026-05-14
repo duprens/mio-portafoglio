@@ -23,6 +23,7 @@ def _conn():
 
 # ----- Rubrica -----
 
+@st.cache_data(show_spinner=False)
 def load_rubrica() -> pd.DataFrame:
     df = _conn().read(worksheet="Rubrica", ttl=0)
     if df is None:
@@ -127,6 +128,7 @@ def save_portfolio(sheet_link: str, clienti_database: dict, date_inizio_clienti:
     _conn().update(spreadsheet=sheet_link, worksheet="Portafogli", data=pd.DataFrame(rows))
 
 
+@st.cache_data(show_spinner=False)
 def load_portfolio(sheet_link: str):
     try:
         df_u = _conn().read(spreadsheet=sheet_link, worksheet="Portafogli", ttl=0)

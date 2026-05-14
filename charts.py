@@ -3,6 +3,13 @@ import numpy as np
 
 COLORI_TORTA = ["#64B5F6", "#81C784", "#BA68C8", "#FFD54F", "#E57373", "#FFB74D", "#4DD0E1", "#F06292"]
 
+EMOJI_MAP = {
+    "Azionario": "📊", "Obbligazionario": "🧾", "Monetario": "💸", "Commodity": "🏗️",
+    "Crypto": "₿", "Bilanciato": "🌓", "Immobiliare": "🏘️", "Altro": "📦",
+    "USA": "🇺🇸", "Europa": "🇪🇺", "Emergenti": "🚀", "Globale": "🌍", "Pacifico": "🏝️",
+    "EUR": "💶", "USD": "💵"
+}
+
 
 def colora(val):
     if isinstance(val, (int, float)):
@@ -65,9 +72,9 @@ def pie_fig(df, group_col: str, title: str):
     fig.add_trace(go.Scatter(
         x=x_pos, y=y_pos,
         mode="markers+text",
-        text=df_g[group_col],
+        text=df_g[group_col].map(lambda x: EMOJI_MAP.get(x, "📍")),
         textposition="middle center",
-        textfont=dict(size=14, color="white"),
+        textfont=dict(size=22, color="white"),
         marker=dict(
             size=df_g["Controvalore"],
             sizemode='area',

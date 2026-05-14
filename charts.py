@@ -1,4 +1,5 @@
 import plotly.graph_objects as go
+import pandas as pd
 
 COLORI_TORTA = ["#64B5F6", "#81C784", "#BA68C8", "#FFD54F", "#E57373", "#FFB74D", "#4DD0E1", "#F06292"]
 
@@ -12,16 +13,6 @@ def colora(val):
         if val.startswith("-") and len(val) > 1:
             return "color: #ff4b4b"
     return ""
-
-
-def _allinea_legenda(row, tot, col):
-    p = (row["Controvalore"] / tot * 100) if tot > 0 else 0
-    p_str = f"{p:.1f}%"
-    if p < 10:
-        p_str = "  " + p_str
-    elif p < 100:
-        p_str = " " + p_str
-    return f"{p_str} {row[col]}"
 
 
 def candele_fig(dati_c, costo_totale_pmc):
@@ -50,19 +41,18 @@ def pie_fig(df, group_col: str, title: str):
         Controvalore=("Controvalore", "sum"),
         Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x)),
     ).reset_index().sort_values(by="Controvalore", ascending=False)
-    tot = df_g["Controvalore"].sum()
-    df_g["Legenda"] = df_g.apply(lambda r: _allinea_legenda(r, tot, group_col), axis=1)
 
     fig = go.Figure(data=[go.Pie(
-        labels=df_g["Legenda"],
+        labels=df_g[group_col], # Usa la colonna originale per le etichette
         values=df_g["Controvalore"],
         customdata=df_g.apply(
-            lambda r: f"<b>{r[group_col]}</b><br>Totale: {r['Controvalore']:.2f} €<br><b>Strumenti:</b>{r['Strumenti']}",
+            # Hovertemplate rimane dettagliato
+            lambda r: f"<b>{r[group_col]}</b><br>Controvalore: {r['Controvalore']:,.2f} €<br><b>Strumenti:</b>{r['Strumenti']}",
             axis=1,
         ),
         hovertemplate="%{customdata}<extra></extra>",
-        hole=.65, sort=False, textinfo="none",
-        domain=dict(x=[0, 1]),
+        hole=.65, sort=False, textinfo="none", # Torta sottile, senza testo interno
+        domain=dict(x=[0.1, 0.9], y=[0.1, 0.9]), # Rimpicciolita e centrata
         marker=dict(colors=COLORI_TORTA, line=dict(color="#0e1117", width=3)),
     )])
     fig.update_layout(
@@ -74,23 +64,21 @@ def pie_fig(df, group_col: str, title: str):
             xanchor="center",
             yanchor="top"
         ),
-        template="plotly_dark", height=450,
-        margin=dict(l=10, r=10, t=50, b=80),
-        showlegend=True, 
-        legend=dict(
-            orientation="h",
-            yanchor="top", 
-            y=-0.1, 
-            xanchor="center", 
-            x=0.5, 
-            font=dict(size=12),
-            bgcolor="rgba(255, 255, 255, 0.03)",
-            bordercolor="rgba(130, 130, 130, 0.2)",
-            borderwidth=1,
-            itemsizing="constant"
-        ),
+        template="plotly_dark", height=350, # Altezza ridotta
+        margin=dict(l=10, r=10, t=30, b=10), # Margini adattati
+        showlegend=False, # Nasconde la legenda interna di Plotly
     )
-    return fig
+    return fig, df_g # Restituisce anche il DataFrame raggruppato per la legenda esterna
+
+
+def format_legend_table(df_g: pd.DataFrame, group_col: str) -> pd.DataFrame:
+    """Formatta il DataFrame raggruppato per la visualizzazione come tabella legenda."""
+    tot = df_g["Controvalore"].sum()
+    df_table = df_g[[group_col, "Controvalore"]].copy()
+    df_table["Peso %"] = (df_table["Controvalore"] / tot * 100).round(1).astype(str) + "%"
+    df_table["Controvalore"] = df_table["Controvalore"].apply(lambda x: f"{x:,.2f} €")
+    df_table.rename(columns={group_col: "Categoria"}, inplace=True)
+    return df_table
 
 
 def planner_fig(a_l, c_v_l, v_f_l):

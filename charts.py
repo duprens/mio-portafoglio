@@ -105,5 +105,6 @@ def planner_fig(a_l, c_v_l, v_f_l):
         hovermode="x unified",
         hoverlabel=dict(bgcolor="rgba(30, 30, 30, 0.95)", font_size=14, bordercolor="#555"),
         xaxis=dict(spikedash="solid", spikemode="across", showspikes=True, spikethickness=1),
+        showlegend=False,
     )
     return fig

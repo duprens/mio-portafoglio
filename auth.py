@@ -59,7 +59,7 @@ def _render_registration():
 
 
 def _render_login():
-    st.markdown("<br><br><h1 style='text-align: center;'>Monitoraggio Portafogli 📈</h1>", unsafe_allow_html=True)
+    st.markdown("<br><br><h1 style='text-align: center;'>Monitoraggio Portafogli 🧐</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #888;'>Accesso Riservato</p><br>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 2, 1])

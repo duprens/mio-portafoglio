@@ -60,7 +60,7 @@ for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.spl
 
     # Recupero logica freccia (variazione seduta precedente) da app.rtf
     var_p_prev_session = 0.0
-    freccia = "—"
+    freccia = ""
     client_portfolio = st.session_state.clienti_database[nome]
     client_start_date = st.session_state.date_inizio_clienti.get(nome, "2024-01-01")
 

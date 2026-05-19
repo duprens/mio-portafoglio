@@ -1,7 +1,6 @@
 import plotly.graph_objects as go
-import pandas as pd
 
-COLORI_TORTA = ["#64B5F6", "#81C784", "#BA68C8", "#FFD54F", "#E57373", "#FFB74D", "#4DD0E1", "#F06292"]
+COLORI_TORTA = ["#2979ff", "#00c853", "#aa00ff", "#ffcf33", "#ff4b4b", "#ff9100", "#00e5ff", "#f50057"]
 
 
 def colora(val):
@@ -15,6 +14,16 @@ def colora(val):
     return ""
 
 
+def _allinea_legenda(row, tot, col):
+    p = (row["Controvalore"] / tot * 100) if tot > 0 else 0
+    p_str = f"{p:.1f}%"
+    if p < 10:
+        p_str = "  " + p_str
+    elif p < 100:
+        p_str = " " + p_str
+    return f"{p_str} {row[col]}"
+
+
 def candele_fig(dati_c, costo_totale_pmc):
     fig = go.Figure()
     fig.add_trace(go.Candlestick(
@@ -25,7 +34,9 @@ def candele_fig(dati_c, costo_totale_pmc):
     ))
     fig.add_trace(go.Scatter(
         x=dati_c.index, y=[costo_totale_pmc] * len(dati_c), mode="lines",
-        line=dict(color="rgba(150, 150, 150, 0.5)", width=2, dash="dash"), hoverinfo="skip",
+        line=dict(color="rgba(150, 150, 150, 0.5)", width=2, dash="dash"),
+        name="Capitale Investito",
+        hovertemplate="Capitale Investito: %{y:,.2f} €<extra></extra>",
     ))
     fig.update_yaxes(autorange=True, fixedrange=False)
     fig.update_xaxes(tickformat="%b %Y", ticklabelmode="period")
@@ -41,51 +52,28 @@ def pie_fig(df, group_col: str, title: str):
         Controvalore=("Controvalore", "sum"),
         Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x)),
     ).reset_index().sort_values(by="Controvalore", ascending=False)
-    tot = df_g["Controvalore"].sum() # Calculate total here for percentage in hovertemplate
+    tot = df_g["Controvalore"].sum()
+    df_g["Legenda"] = df_g.apply(lambda r: _allinea_legenda(r, tot, group_col), axis=1)
 
     fig = go.Figure(data=[go.Pie(
-        labels=df_g[group_col], # Usa la colonna originale per le etichette
+        labels=df_g["Legenda"],
         values=df_g["Controvalore"],
         customdata=df_g.apply(
-            # Hovertemplate con Controvalore, Peso % e Strumenti
-            lambda r: f"<b>{r[group_col]}</b><br>Controvalore: {r['Controvalore']:,.2f} €<br>Peso: {(r['Controvalore']/tot*100):.1f}%<br><b>Strumenti:</b>{r['Strumenti']}",
+            lambda r: f"<b>{r[group_col]}</b><br>Totale: {r['Controvalore']:.2f} €<br><b>Strumenti:</b>{r['Strumenti']}",
             axis=1,
         ),
         hovertemplate="%{customdata}<extra></extra>",
-        hole=.65, sort=False, textinfo="none", # Torta sottile, senza testo interno
-        domain=dict(x=[0.1, 0.9], y=[0.1, 0.9]), # Rimpicciolita e centrata
-        marker=dict(colors=COLORI_TORTA, line=dict(color="#0e1117", width=3)),
+        hole=.4, sort=False, textinfo="none",
+        domain=dict(x=[0, 0.5]),
+        marker=dict(colors=COLORI_TORTA, line=dict(color="#1e1e1e", width=2)),
     )])
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        title=dict(
-            text=title,
-            x=0.5,
-            y=1,
-            xanchor="center",
-            yanchor="top"
-        ),
-        template="plotly_dark", height=350, # Altezza ridotta
-        margin=dict(l=10, r=10, t=30, b=10), # Margini adattati
-        showlegend=False, # Nasconde la legenda interna di Plotly
+        title_text=title, template="plotly_dark", height=380,
+        margin=dict(l=0, r=0, t=40, b=10),
+        showlegend=True, legend=dict(yanchor="middle", y=0.5, xanchor="left", x=0.52, font=dict(size=12)),
     )
-    return fig, df_g # Restituisce anche il DataFrame raggruppato per la legenda esterna
-
-def format_legend_table(df_g: pd.DataFrame, group_col: str) -> tuple[pd.DataFrame, list[str]]:
-    """Formatta il DataFrame raggruppato per la visualizzazione come tabella legenda."""
-    tot = df_g["Controvalore"].sum()
-    df_table = df_g[[group_col, "Controvalore"]].copy()
-    df_table["Peso %"] = (df_table["Controvalore"] / tot * 100).round(1).astype(str) + "%"
-    df_table["Controvalore"] = df_table["Controvalore"].apply(lambda x: f"{x:,.2f} €")
-    df_table.rename(columns={group_col: "Categoria"}, inplace=True)
-
-    # Add a 'Colore' column for styling
-    df_table.insert(0, "#", "●") # Using a bullet point as a placeholder
-
-    # Get the colors that will be used for these categories, in the order of df_table
-    colors_for_table = [COLORI_TORTA[i % len(COLORI_TORTA)] for i in range(len(df_table))]
-
-    return df_table, colors_for_table
+    return fig
 
 
 def planner_fig(a_l, c_v_l, v_f_l):
@@ -93,18 +81,17 @@ def planner_fig(a_l, c_v_l, v_f_l):
     fig.add_trace(go.Scatter(
         x=a_l, y=c_v_l, mode="lines", line=dict(width=0),
         fillcolor="rgba(150, 150, 150, 0.3)", fill="tozeroy",
-        name="Capitale Versato", hovertemplate="%{y:,.2f} €", showlegend=False,
+        name="Capitale Versato", hovertemplate="%{y:,.2f} €",
     ))
     fig.add_trace(go.Scatter(
         x=a_l, y=v_f_l, mode="lines", line=dict(color="#00c853", width=3),
         fillcolor="rgba(0, 200, 83, 0.2)", fill="tonexty",
-        name="Interesse Composto", hovertemplate="%{y:,.2f} €", showlegend=False,
+        name="Interesse Composto", hovertemplate="%{y:,.2f} €",
     ))
     fig.update_layout(
         template="plotly_dark", height=380, margin=dict(l=0, r=0, t=30, b=10),
         hovermode="x unified",
         hoverlabel=dict(bgcolor="rgba(30, 30, 30, 0.95)", font_size=14, bordercolor="#555"),
         xaxis=dict(spikedash="solid", spikemode="across", showspikes=True, spikethickness=1),
-        showlegend=False,
     )
     return fig

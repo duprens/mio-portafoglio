@@ -40,7 +40,7 @@ def pie_fig(df, group_col: str, title: str):
     df_g = df.groupby(group_col).agg(
         Controvalore=("Controvalore", "sum"),
         Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x)),
-    ).reset_index().sort_values(by="Controvalore", ascending=False)
+    ).reset_index().sort_values(by="Controvalore", ascending=False).reset_index(drop=True)
     tot = df_g["Controvalore"].sum() # Calculate total here for percentage in hovertemplate
 
     fig = go.Figure(data=[go.Pie(

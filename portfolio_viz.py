@@ -51,7 +51,7 @@ def pie_fig(df, group_col: str, title: str):
     df_g = df.groupby(group_col).agg(
         Controvalore=("Controvalore", "sum"),
         Strumenti=("Strumento", lambda x: "<br>• " + "<br>• ".join(x)),
-    ).reset_index().sort_values(by="Controvalore", ascending=False)
+    ).reset_index().sort_values(by="Controvalore", ascending=False).reset_index(drop=True)
     tot = df_g["Controvalore"].sum()
     df_g["Legenda"] = df_g.apply(lambda r: _allinea_legenda(r, tot, group_col), axis=1)
 

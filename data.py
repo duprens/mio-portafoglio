@@ -1,4 +1,5 @@
 import logging
+import re
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -184,6 +185,27 @@ def fetch_prices(tickers):
 MOVIMENTI_WS = "Movimenti"
 
 
+def _parse_num_it(val):
+    """Converte un numero che può arrivare dal foglio in formato italiano
+    (virgola decimale, punto migliaia) o internazionale. Esempi:
+    '27,51'->27.51, '1.978'->1978, '1.978,50'->1978.5, '27.51'->27.51."""
+    if pd.isna(val):
+        return np.nan
+    if isinstance(val, (int, float)):
+        return float(val)
+    s = str(val).strip().replace("\xa0", "").replace(" ", "")
+    if not s:
+        return np.nan
+    if "," in s:                                    # virgola = decimale, punto = migliaia
+        s = s.replace(".", "").replace(",", ".")
+    elif re.fullmatch(r"-?\d{1,3}(\.\d{3})+", s):   # solo punti raggruppati a 3 = migliaia
+        s = s.replace(".", "")
+    try:
+        return float(s)
+    except ValueError:
+        return np.nan
+
+
 def _calcola_pmc(dft: pd.DataFrame) -> tuple[float, float]:
     """Costo medio ponderato (PMC) dalle operazioni di un singolo ticker,
     ordinate per data. Ogni acquisto aggiorna la media di carico; ogni vendita
@@ -220,10 +242,12 @@ def load_movimenti(sheet_link: str):
             return {}, {}, {}
 
         df = df.copy()
-        df["Data Operazione"] = pd.to_datetime(df["Data Operazione"], errors="coerce").dt.normalize()
-        df["Data Inizio"] = pd.to_datetime(df["Data Inizio"], errors="coerce")
-        df["Quantità"] = pd.to_numeric(df["Quantità"], errors="coerce")
-        df["Prezzo"] = pd.to_numeric(df["Prezzo"], errors="coerce")
+        # dayfirst=True: le date arrivano come gg/mm/aaaa (formato italiano).
+        df["Data Operazione"] = pd.to_datetime(df["Data Operazione"], errors="coerce", dayfirst=True).dt.normalize()
+        df["Data Inizio"] = pd.to_datetime(df["Data Inizio"], errors="coerce", dayfirst=True)
+        # Numeri robusti al formato italiano (virgola decimale / punto migliaia).
+        df["Quantità"] = df["Quantità"].map(_parse_num_it)
+        df["Prezzo"] = df["Prezzo"].map(_parse_num_it)
 
         # Segno robusto: vendita -> negativo, qualsiasi altra cosa -> positivo,
         # indipendentemente da come è scritta la quantità nel foglio.

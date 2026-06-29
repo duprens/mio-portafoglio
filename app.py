@@ -178,14 +178,20 @@ if st.session_state.cliente_selezionato:
         colonne_view = ["Asset", "Strumento", "PMC", "Ultimo Prezzo", "Quantità", "Ribilanc. (Pz)", "Var. €", "Var. %", "Controvalore", "Peso %"]
         df_for_editor = df_sorted[colonne_view].copy()
 
+        def _fmt_qty(v):
+            try:
+                v = float(v)
+            except (TypeError, ValueError):
+                return v
+            return f"{v:.0f}" if v.is_integer() else f"{v:.4f}".rstrip("0").rstrip(".")
+
+        fmt_map = {c: "{:.2f}" for c in ["PMC", "Ultimo Prezzo", "Var. €", "Var. %", "Controvalore", "Peso %"]}
+        fmt_map["Quantità"] = _fmt_qty
+
         try:
-            styled_df = df_for_editor.style.map(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format(
-                "{:.2f}", subset=["PMC", "Ultimo Prezzo", "Var. €", "Var. %", "Controvalore", "Peso %"]
-            )
+            styled_df = df_for_editor.style.map(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format(fmt_map)
         except AttributeError:
-            styled_df = df_for_editor.style.applymap(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format(
-                "{:.2f}", subset=["PMC", "Ultimo Prezzo", "Var. €", "Var. %", "Controvalore", "Peso %"]
-            )
+            styled_df = df_for_editor.style.applymap(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format(fmt_map)
 
         # Tabella in sola lettura: la fonte è la scheda "Movimenti".
         st.data_editor(

@@ -413,8 +413,15 @@ def fetch_performance(ops_df, start_date, tf):
             r = ((V[t] - F[t]) / v0 - 1.0) if v0 > 1e-9 else 0.0
             idx[t] = idx[t - 1] * (1.0 + r)
 
+        # Ancoraggio al capitale realmente investito (costo dal foglio), non al
+        # valore di mercato yfinance del primo giorno: per gli ETF europei yfinance
+        # può dare prezzi storici imprecisi, e ancorarsi lì falserebbe il totale.
+        # Così il TWRR finisce sul rendimento reale ed è confrontabile col MWRR.
+        C0 = float(dati_c["Costo"].iloc[0]) if "Costo" in dati_c.columns else float(V[0])
+        factor = (V[0] / C0) if C0 > 1e-9 else 1.0
+
         perf = pd.DataFrame(index=dati_c.index)
-        perf["Perf"] = (idx - 1.0) * 100.0
+        perf["Perf"] = (idx * factor - 1.0) * 100.0
         return perf
     except Exception:
         logger.exception("Errore fetch_performance")

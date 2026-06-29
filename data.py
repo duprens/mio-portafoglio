@@ -167,7 +167,7 @@ def fetch_prices(tickers):
     if not tickers:
         return prices
     try:
-        data = yf.download(list(tickers), period="5d", progress=False)
+        data = yf.download(list(tickers), period="5d", progress=False, auto_adjust=False)
         for ticker in tickers:
             if len(tickers) == 1:
                 valid = data["Close"].dropna()
@@ -328,7 +328,11 @@ def fetch_candele_storico(ops_df, start_date, tf):
         if not tickers_list:
             return None
 
-        data = yf.download(tickers_list, start=start_date, interval=tf, progress=False)
+        # auto_adjust=False: prezzi NON aggiustati per dividendi/cedole, coerenti
+        # con il costo reale pagato (PMC) e con la Variazione Totale. Con gli
+        # adjusted, il valore al giorno dell'acquisto risulterebbe sotto il costo
+        # (per le cedole staccate), gonfiando il time-weighted return.
+        data = yf.download(tickers_list, start=start_date, interval=tf, progress=False, auto_adjust=False)
         if data is None or data.empty:
             return None
 

@@ -143,7 +143,7 @@ if st.session_state.cliente_selezionato:
         options=["T", "M"],
         default=st.session_state.metodo_scelta,
         key="metodo_control",
-        help="T = rendimento time-weighted (depura versamenti/prelievi) · M = money-weighted (P&L sul capitale investito, coincide con la Variazione Totale)",
+        help="T = time-weighted (depura versamenti/prelievi) · M = money-weighted (P&L sul capitale investito)",
     )
     if metodo and metodo != st.session_state.metodo_scelta:
         st.session_state.metodo_scelta = metodo

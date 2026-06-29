@@ -52,6 +52,29 @@ def candele_fig(dati_c, costo_totale_pmc):
     return fig
 
 
+def performance_fig(perf):
+    """Linea continua del rendimento time-weighted (%). Niente gradini da
+    versamenti/prelievi: mostra solo l'andamento degli investimenti."""
+    fin = float(perf["Perf"].iloc[-1]) if len(perf) else 0.0
+    colore = "#00c853" if fin >= 0 else "#ff4b4b"
+    fill_rgba = "rgba(0, 200, 83, 0.12)" if fin >= 0 else "rgba(255, 75, 75, 0.12)"
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=perf.index, y=perf["Perf"], mode="lines",
+        line=dict(color=colore, width=2), fill="tozeroy", fillcolor=fill_rgba,
+        hovertemplate="%{x|%d %b %Y}<br>Performance: %{y:+.2f}%<extra></extra>",
+        showlegend=False,
+    ))
+    fig.add_hline(y=0, line=dict(color="rgba(150, 150, 150, 0.5)", width=1, dash="dash"))
+    fig.update_yaxes(autorange=True, fixedrange=False, ticksuffix="%")
+    fig.update_xaxes(tickformat="%b %Y", ticklabelmode="period")
+    fig.update_layout(
+        yaxis_title="Performance (%)", xaxis_rangeslider_visible=False,
+        margin=dict(l=20, r=20, t=30, b=20), height=400, template="plotly_dark", showlegend=False,
+    )
+    return fig
+
+
 def pie_fig(df, group_col: str, title: str):
     df_g = df.groupby(group_col).agg(
         Controvalore=("Controvalore", "sum"),

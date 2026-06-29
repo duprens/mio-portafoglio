@@ -179,6 +179,153 @@ def fetch_prices(tickers):
     return prices
 
 
+# ----- Movimenti (nuova fonte unica: scheda "Movimenti") -----
+
+MOVIMENTI_WS = "Movimenti"
+
+
+def _calcola_pmc(dft: pd.DataFrame) -> tuple[float, float]:
+    """Costo medio ponderato (PMC) dalle operazioni di un singolo ticker,
+    ordinate per data. Ogni acquisto aggiorna la media di carico; ogni vendita
+    riduce le quantità ma NON cambia il PMC (le quote vendute escono al costo
+    medio corrente). Ritorna (quantità_netta, pmc)."""
+    run_qty, cost_basis = 0.0, 0.0
+    for _, r in dft.iterrows():
+        q, p = float(r["QtySigned"]), float(r["Prezzo"])
+        if q > 0:  # acquisto
+            cost_basis += q * p
+            run_qty += q
+        else:      # vendita: rimuove al costo medio corrente, PMC invariato
+            if run_qty > 1e-9:
+                avg = cost_basis / run_qty
+                cost_basis += q * avg  # q è negativo -> riduce il monte costi
+                run_qty += q
+    pmc = (cost_basis / run_qty) if run_qty > 1e-9 else 0.0
+    return run_qty, pmc
+
+
+@st.cache_data(show_spinner=False)
+def load_movimenti(sheet_link: str):
+    """Legge la scheda 'Movimenti' (unica fonte) e ricostruisce:
+      - clienti_database:   holdings correnti per cliente, con quantità netta e
+                            PMC calcolato dal costo medio ponderato;
+      - date_inizio_clienti: data inizio portafoglio per cliente;
+      - operazioni_database: DataFrame operazioni per cliente (Ticker, Data, Qty
+                            con segno) usato per ricostruire il grafico storico.
+    Le posizioni interamente vendute (quantità netta 0) non compaiono nella
+    tabella corrente ma restano nelle operazioni per la fedeltà del grafico."""
+    try:
+        df = _conn().read(spreadsheet=sheet_link, worksheet=MOVIMENTI_WS, ttl=0)
+        if df is None or df.empty or "Cliente" not in df.columns:
+            return {}, {}, {}
+
+        df = df.copy()
+        df["Data Operazione"] = pd.to_datetime(df["Data Operazione"], errors="coerce").dt.normalize()
+        df["Data Inizio"] = pd.to_datetime(df["Data Inizio"], errors="coerce")
+        df["Quantità"] = pd.to_numeric(df["Quantità"], errors="coerce")
+        df["Prezzo"] = pd.to_numeric(df["Prezzo"], errors="coerce")
+
+        # Segno robusto: vendita -> negativo, qualsiasi altra cosa -> positivo,
+        # indipendentemente da come è scritta la quantità nel foglio.
+        op = df["Operazione"].astype(str).str.strip().str.lower()
+        df["QtySigned"] = np.where(op.eq("vendita"), -1.0, 1.0) * df["Quantità"].abs()
+
+        c_db, d_db, ops_db = {}, {}, {}
+        for cliente in df["Cliente"].dropna().unique():
+            dfc = df[df["Cliente"] == cliente].dropna(subset=["Ticker", "Data Operazione", "QtySigned", "Prezzo"])
+            if dfc.empty:
+                continue
+
+            di = dfc["Data Inizio"].min()
+            if pd.isna(di):
+                di = dfc["Data Operazione"].min()
+            d_db[cliente] = di.strftime("%Y-%m-%d")
+
+            ops_db[cliente] = (
+                dfc[["Ticker", "Data Operazione", "QtySigned"]]
+                .rename(columns={"Data Operazione": "Data", "QtySigned": "Qty"})
+                .reset_index(drop=True)
+            )
+
+            holdings = []
+            for ticker in dfc["Ticker"].unique():
+                dft = dfc[dfc["Ticker"] == ticker].sort_values("Data Operazione")
+                net_qty, pmc = _calcola_pmc(dft)
+                if net_qty <= 1e-9:  # posizione chiusa: fuori dal portafoglio attuale
+                    continue
+                last = dft.iloc[-1]
+                holdings.append({
+                    "Strumento": str(last["Strumento"]),
+                    "Ticker": str(ticker),
+                    "Quantità": float(net_qty),
+                    "PMC": round(float(pmc), 4),
+                    "Asset": str(last["Asset"]),
+                    "Area": str(last["Area"]),
+                    "Valuta": str(last["Valuta"]),
+                })
+            c_db[cliente] = holdings
+        return c_db, d_db, ops_db
+    except Exception:
+        logger.exception("Errore load_movimenti")
+        return {}, {}, {}
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def fetch_candele_storico(ops_df, start_date, tf):
+    """Ricostruisce le candele del controvalore di portafoglio usando le quantità
+    REALMENTE detenute a ciascuna data (acquisti e vendite cumulati nel tempo),
+    invece di proiettare all'indietro le quantità odierne. Nessuna conversione
+    valutaria: gli strumenti sono quotati in EUR (come nel resto dell'app)."""
+    try:
+        if ops_df is None or len(ops_df) == 0:
+            return None
+        tickers_list = sorted(ops_df["Ticker"].dropna().unique().tolist())
+        if not tickers_list:
+            return None
+
+        data = yf.download(tickers_list, start=start_date, interval=tf, progress=False)
+        if data is None or data.empty:
+            return None
+
+        price_idx = data.index
+        norm_idx = pd.DatetimeIndex(pd.to_datetime(price_idx).normalize())
+        single = len(tickers_list) == 1
+
+        df_c = pd.DataFrame(index=price_idx)
+        df_c["Open"], df_c["High"], df_c["Low"], df_c["Close"] = 0.0, 0.0, 0.0, 0.0
+
+        for t in tickers_list:
+            ops_t = ops_df[ops_df["Ticker"] == t]
+            cum = ops_t.groupby("Data")["Qty"].sum().sort_index().cumsum()
+            if cum.empty:
+                continue
+            # Quantità detenuta a ciascuna data prezzo = ultimo cumulato con Data <= data prezzo
+            full = cum.reindex(cum.index.union(norm_idx)).ffill().fillna(0.0)
+            hold = full.reindex(norm_idx).fillna(0.0).values
+
+            if single:
+                cl = data["Close"].ffill().bfill()
+                op_ = data["Open"].replace(0, np.nan).fillna(cl)
+                hi = data["High"].replace(0, np.nan).fillna(cl)
+                lo = data["Low"].replace(0, np.nan).fillna(cl)
+            else:
+                cl = data["Close"][t].ffill().bfill()
+                op_ = data["Open"][t].replace(0, np.nan).fillna(cl)
+                hi = data["High"][t].replace(0, np.nan).fillna(cl)
+                lo = data["Low"][t].replace(0, np.nan).fillna(cl)
+
+            df_c["Open"] += op_.values * hold
+            df_c["High"] += hi.values * hold
+            df_c["Low"] += lo.values * hold
+            df_c["Close"] += cl.values * hold
+
+        df_c.index = pd.to_datetime(df_c.index).normalize()
+        return df_c
+    except Exception:
+        logger.exception("Errore fetch_candele_storico")
+        return None
+
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_candele(tickers_list, portfolio_data, start_date, tf):
     try:

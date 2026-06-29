@@ -418,6 +418,27 @@ def fetch_performance(ops_df, start_date, tf):
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
+def fetch_mwrr(ops_df, start_date, tf):
+    """Rendimento money-weighted come P&L cumulato sul capitale investito:
+    a ogni data (controvalore - capitale investito) / capitale investito.
+    All'ultima data coincide con la 'Variazione Totale %' mostrata in alto."""
+    try:
+        dati_c = fetch_candele_storico(ops_df, start_date, tf)
+        if dati_c is None or dati_c.empty or "Costo" not in dati_c.columns:
+            return None
+        V = dati_c["Close"].astype(float).values
+        C = dati_c["Costo"].astype(float).values
+        with np.errstate(divide="ignore", invalid="ignore"):
+            p = np.where(C > 1e-9, (V - C) / C * 100.0, 0.0)
+        perf = pd.DataFrame(index=dati_c.index)
+        perf["Perf"] = p
+        return perf
+    except Exception:
+        logger.exception("Errore fetch_mwrr")
+        return None
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
 def fetch_candele(tickers_list, portfolio_data, start_date, tf):
     try:
         data = yf.download(tickers_list, start=start_date, interval=tf, progress=False)

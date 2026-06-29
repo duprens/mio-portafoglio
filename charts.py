@@ -17,16 +17,32 @@ def colora(val):
 
 def candele_fig(dati_c, costo_totale_pmc):
     fig = go.Figure()
+    # Linea di raccordo sottile sulle chiusure: collega le candele anche quando il
+    # controvalore "salta" per un acquisto o una vendita (niente più isole staccate).
+    fig.add_trace(go.Scatter(
+        x=dati_c.index, y=dati_c["Close"], mode="lines",
+        line=dict(color="rgba(150, 150, 150, 0.45)", width=1), connectgaps=True,
+        hoverinfo="skip", showlegend=False,
+    ))
     fig.add_trace(go.Candlestick(
         x=dati_c.index, open=dati_c["Open"], high=dati_c["High"], low=dati_c["Low"], close=dati_c["Close"],
         increasing_line_color="#00c853", decreasing_line_color="#ff4b4b",
         increasing_line_width=1, decreasing_line_width=1,
         hovertemplate="Data: %{x|%d %b %Y}<br>Open: %{open:.2f}<br>High: %{high:.2f}<br>Low: %{low:.2f}<br>Close: %{close:.2f}<extra></extra>",
     ))
-    fig.add_trace(go.Scatter(
-        x=dati_c.index, y=[costo_totale_pmc] * len(dati_c), mode="lines",
-        line=dict(color="rgba(150, 150, 150, 0.5)", width=2, dash="dash"), hoverinfo="skip",
-    ))
+    # Linea capitale investito: "a gradini" se è disponibile lo storico del costo
+    # (sale sugli acquisti, scende sulle vendite); altrimenti piatta come prima.
+    if "Costo" in dati_c.columns and float(dati_c["Costo"].abs().sum()) > 0:
+        fig.add_trace(go.Scatter(
+            x=dati_c.index, y=dati_c["Costo"], mode="lines", line_shape="hv",
+            line=dict(color="rgba(150, 150, 150, 0.6)", width=2, dash="dash"),
+            hovertemplate="Capitale investito: %{y:,.2f} €<extra></extra>", showlegend=False,
+        ))
+    else:
+        fig.add_trace(go.Scatter(
+            x=dati_c.index, y=[costo_totale_pmc] * len(dati_c), mode="lines",
+            line=dict(color="rgba(150, 150, 150, 0.5)", width=2, dash="dash"), hoverinfo="skip", showlegend=False,
+        ))
     fig.update_yaxes(autorange=True, fixedrange=False)
     fig.update_xaxes(tickformat="%b %Y", ticklabelmode="period")
     fig.update_layout(

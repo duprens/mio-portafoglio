@@ -40,8 +40,8 @@ if st.session_state.cliente_selezionato and st.session_state.cliente_selezionato
     rimasti = list(st.session_state.clienti_database.keys())
     st.session_state.cliente_selezionato = rimasti[0] if rimasti else ""
 
-if "timeframe_scelta" not in st.session_state:
-    st.session_state.timeframe_scelta, st.session_state.timeframe_control = "D", "D"
+if "metodo_scelta" not in st.session_state:
+    st.session_state.metodo_scelta, st.session_state.metodo_control = "T", "T"
 
 # ---- Prezzi ----
 tutti_i_tickers = set()
@@ -85,7 +85,7 @@ for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.spl
         width="stretch",
         type="primary" if st.session_state.cliente_selezionato == nome else "secondary",
     ):
-        st.session_state.cliente_selezionato, st.session_state.timeframe_scelta, st.session_state.timeframe_control = nome, "D", "D"
+        st.session_state.cliente_selezionato, st.session_state.metodo_scelta, st.session_state.metodo_control = nome, "T", "T"
         st.rerun()
 
 # Clienti, strumenti e operazioni si gestiscono direttamente dalla scheda
@@ -137,20 +137,24 @@ if st.session_state.cliente_selezionato:
 
     st.divider()
 
-    # Pillola D / W
-    timeframe = st.segmented_control(
-        label="", 
-        options=["D", "W"], 
-        default=st.session_state.timeframe_scelta,
-        key="timeframe_control"
+    # Pillola T (Time-Weighted) / M (Money-Weighted)
+    metodo = st.segmented_control(
+        label="",
+        options=["T", "M"],
+        default=st.session_state.metodo_scelta,
+        key="metodo_control",
+        help="T = rendimento time-weighted (depura versamenti/prelievi) · M = money-weighted (P&L sul capitale investito, coincide con la Variazione Totale)",
     )
-    if timeframe != st.session_state.timeframe_scelta:
-        st.session_state.timeframe_scelta = timeframe
+    if metodo and metodo != st.session_state.metodo_scelta:
+        st.session_state.metodo_scelta = metodo
         st.rerun()
 
     if not df.empty:
-        tf_da_usare = "1d" if st.session_state.timeframe_scelta == "D" else "1wk"
-        perf = data.fetch_performance(st.session_state.operazioni_database.get(cliente), d_inizio, tf_da_usare)
+        ops_cliente = st.session_state.operazioni_database.get(cliente)
+        if st.session_state.metodo_scelta == "M":
+            perf = data.fetch_mwrr(ops_cliente, d_inizio, "1d")
+        else:
+            perf = data.fetch_performance(ops_cliente, d_inizio, "1d")
         if perf is not None:
             fig_perf = performance_fig(perf)
             fig_perf.update_layout(yaxis_title=None)

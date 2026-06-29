@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
 import pandas as pd
+import numpy as np
 
 COLORI_TORTA = ["#64B5F6", "#81C784", "#BA68C8", "#FFD54F", "#E57373", "#FFB74D", "#4DD0E1", "#F06292"]
 
@@ -52,27 +53,53 @@ def candele_fig(dati_c, costo_totale_pmc):
     return fig
 
 
+def _split_zero(x, y):
+    """Spezza la serie inserendo i punti esatti di attraversamento dello zero,
+    così la parte positiva e quella negativa non si sovrappongono mai sull'asse.
+    Ritorna (x aumentato, y_pos con NaN dove negativa, y_neg con NaN dove positiva)."""
+    xs, yp, yn = [], [], []
+    n = len(y)
+    for i in range(n):
+        xi, yi = x[i], float(y[i])
+        xs.append(xi)
+        yp.append(yi if yi >= 0 else np.nan)
+        yn.append(yi if yi <= 0 else np.nan)
+        if i < n - 1:
+            yj = float(y[i + 1])
+            if (yi >= 0) != (yj >= 0) and yi != yj:
+                frac = yi / (yi - yj)               # quota di intervallo fino allo zero
+                xc = xi + (x[i + 1] - xi) * frac     # data interpolata dell'incrocio
+                xs.append(xc)
+                yp.append(0.0)
+                yn.append(0.0)
+    return xs, yp, yn
+
+
 def performance_fig(perf):
-    """Linea continua del rendimento (%). Verde sopra lo zero, rossa sotto.
-    Vale sia per il TWRR sia per il MWRR: cambia solo la serie passata."""
+    """Linea continua del rendimento (%). Verde sopra lo zero, rossa sotto, senza
+    doppioni all'incrocio. Vale sia per il TWRR sia per il MWRR."""
     x = perf.index
-    y = perf["Perf"].astype(float)
-    y_pos = y.where(y >= 0, 0.0)   # parte positiva (verde), 0 dove negativa
-    y_neg = y.where(y <= 0, 0.0)   # parte negativa (rossa), 0 dove positiva
+    y = perf["Perf"].astype(float).values
+    xs, yp, yn = _split_zero(x, y)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=x, y=y_pos, mode="lines", line=dict(color="#00c853", width=2),
-        fill="tozeroy", fillcolor="rgba(0, 200, 83, 0.12)", hoverinfo="skip", showlegend=False,
+        x=xs, y=yp, mode="lines", line=dict(color="#00c853", width=2),
+        fill="tozeroy", fillcolor="rgba(0, 200, 83, 0.12)", connectgaps=False,
+        hoverinfo="skip", showlegend=False,
     ))
     fig.add_trace(go.Scatter(
-        x=x, y=y_neg, mode="lines", line=dict(color="#ff4b4b", width=2),
-        fill="tozeroy", fillcolor="rgba(255, 75, 75, 0.12)", hoverinfo="skip", showlegend=False,
+        x=xs, y=yn, mode="lines", line=dict(color="#ff4b4b", width=2),
+        fill="tozeroy", fillcolor="rgba(255, 75, 75, 0.12)", connectgaps=False,
+        hoverinfo="skip", showlegend=False,
     ))
-    # Traccia trasparente solo per l'hover: mostra il valore reale a 2 decimali.
+    # Traccia trasparente solo per l'hover: testo preformattato a 2 decimali
+    # (il formato d3 di Plotly viene ignorato in alcune versioni).
+    testo = [f"{v:+.2f}%" for v in y]
     fig.add_trace(go.Scatter(
         x=x, y=y, mode="lines", line=dict(color="rgba(0,0,0,0)", width=0),
-        hovertemplate="%{x|%d %b %Y}<br>Performance: %{y:+.2f}%<extra></extra>", showlegend=False,
+        text=testo, hovertemplate="%{x|%d %b %Y}<br>Performance: %{text}<extra></extra>",
+        showlegend=False,
     ))
     fig.add_hline(y=0, line=dict(color="rgba(150, 150, 150, 0.5)", width=1, dash="dash"))
     fig.update_yaxes(autorange=True, fixedrange=False, ticksuffix="%")

@@ -6,7 +6,7 @@ from styles import apply as apply_styles
 from security import assert_encryption_key
 from auth import gate, logout_button
 import data # Import data module
-from charts import colora, candele_fig, pie_fig, planner_fig, format_legend_table, COLORI_TORTA # Import COLORI_TORTA
+from charts import colora, candele_fig, performance_fig, pie_fig, planner_fig, format_legend_table, COLORI_TORTA # Import COLORI_TORTA
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -150,11 +150,11 @@ if st.session_state.cliente_selezionato:
 
     if not df.empty:
         tf_da_usare = "1d" if st.session_state.timeframe_scelta == "D" else "1wk"
-        dati_c = data.fetch_candele_storico(st.session_state.operazioni_database.get(cliente), d_inizio, tf_da_usare)
-        if dati_c is not None:
-            fig_candele = candele_fig(dati_c, costo_totale_pmc)
-            fig_candele.update_layout(yaxis_title=None)
-            st.plotly_chart(fig_candele, width="stretch")
+        perf = data.fetch_performance(st.session_state.operazioni_database.get(cliente), d_inizio, tf_da_usare)
+        if perf is not None:
+            fig_perf = performance_fig(perf)
+            fig_perf.update_layout(yaxis_title=None)
+            st.plotly_chart(fig_perf, width="stretch")
 
     st.divider()
 

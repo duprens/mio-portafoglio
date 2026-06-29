@@ -379,6 +379,45 @@ def fetch_candele_storico(ops_df, start_date, tf):
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
+def fetch_performance(ops_df, start_date, tf):
+    """Rendimento time-weighted (%) del portafoglio: neutralizza versamenti e
+    prelievi, così la curva mostra solo come hanno reso gli strumenti e non i
+    movimenti di capitale. Indice giornaliero concatenato (convenzione: il
+    flusso del giorno avviene a fine seduta). Parte da 0%."""
+    try:
+        dati_c = fetch_candele_storico(ops_df, start_date, tf)
+        if dati_c is None or dati_c.empty or "Prezzo" not in ops_df.columns:
+            return None
+
+        V = dati_c["Close"].astype(float).values
+        price_dates = pd.DatetimeIndex(pd.to_datetime(dati_c.index).normalize())
+
+        # Flusso di cassa per giorno = somma di Qty*Prezzo (acquisti +, vendite -).
+        # Ogni flusso viene agganciato alla prima seduta di borsa >= data operazione,
+        # coerentemente con quando le quantità entrano nel controvalore.
+        cf = (ops_df["Qty"].astype(float) * ops_df["Prezzo"].astype(float))
+        cf = cf.groupby(pd.to_datetime(ops_df["Data"]).dt.normalize()).sum()
+        F = np.zeros(len(price_dates))
+        for dt, amt in cf.items():
+            pos = price_dates.searchsorted(dt)
+            if pos < len(price_dates):
+                F[pos] += float(amt)
+
+        idx = np.ones(len(V))
+        for t in range(1, len(V)):
+            v0 = V[t - 1]
+            r = ((V[t] - F[t]) / v0 - 1.0) if v0 > 1e-9 else 0.0
+            idx[t] = idx[t - 1] * (1.0 + r)
+
+        perf = pd.DataFrame(index=dati_c.index)
+        perf["Perf"] = (idx - 1.0) * 100.0
+        return perf
+    except Exception:
+        logger.exception("Errore fetch_performance")
+        return None
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
 def fetch_candele(tickers_list, portfolio_data, start_date, tf):
     try:
         data = yf.download(tickers_list, start=start_date, interval=tf, progress=False)

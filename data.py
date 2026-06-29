@@ -206,6 +206,27 @@ def _parse_num_it(val):
         return np.nan
 
 
+def _cost_basis_step(ops_t: pd.DataFrame) -> pd.Series:
+    """Serie del capitale investito (costo medio) di un ticker, con un valore per
+    ogni data di operazione: cresce sugli acquisti, cala sulle vendite (le quote
+    escono al costo medio). Usata per la linea 'a gradini' del grafico."""
+    run_qty, cost = 0.0, 0.0
+    recs = {}
+    for _, r in ops_t.sort_values("Data").iterrows():
+        q, p = float(r["Qty"]), float(r["Prezzo"])
+        if q > 0:
+            cost += q * p
+            run_qty += q
+        elif run_qty > 1e-9:
+            avg = cost / run_qty
+            cost += q * avg  # q negativo -> restituisce capitale
+            run_qty += q
+            if run_qty <= 1e-9:
+                cost = 0.0
+        recs[r["Data"]] = cost
+    return pd.Series(recs, dtype=float).sort_index()
+
+
 def _calcola_pmc(dft: pd.DataFrame) -> tuple[float, float]:
     """Costo medio ponderato (PMC) dalle operazioni di un singolo ticker,
     ordinate per data. Ogni acquisto aggiorna la media di carico; ogni vendita
@@ -266,7 +287,7 @@ def load_movimenti(sheet_link: str):
             d_db[cliente] = di.strftime("%Y-%m-%d")
 
             ops_db[cliente] = (
-                dfc[["Ticker", "Data Operazione", "QtySigned"]]
+                dfc[["Ticker", "Data Operazione", "QtySigned", "Prezzo"]]
                 .rename(columns={"Data Operazione": "Data", "QtySigned": "Qty"})
                 .reset_index(drop=True)
             )
@@ -315,8 +336,10 @@ def fetch_candele_storico(ops_df, start_date, tf):
         norm_idx = pd.DatetimeIndex(pd.to_datetime(price_idx).normalize())
         single = len(tickers_list) == 1
 
+        has_price = "Prezzo" in ops_df.columns
         df_c = pd.DataFrame(index=price_idx)
         df_c["Open"], df_c["High"], df_c["Low"], df_c["Close"] = 0.0, 0.0, 0.0, 0.0
+        df_c["Costo"] = 0.0  # capitale investito nel tempo (linea "a gradini")
 
         for t in tickers_list:
             ops_t = ops_df[ops_df["Ticker"] == t]
@@ -342,6 +365,11 @@ def fetch_candele_storico(ops_df, start_date, tf):
             df_c["High"] += hi.values * hold
             df_c["Low"] += lo.values * hold
             df_c["Close"] += cl.values * hold
+
+            if has_price:
+                steps = _cost_basis_step(ops_t)
+                cfull = steps.reindex(steps.index.union(norm_idx)).ffill().fillna(0.0)
+                df_c["Costo"] += cfull.reindex(norm_idx).fillna(0.0).values
 
         df_c.index = pd.to_datetime(df_c.index).normalize()
         return df_c

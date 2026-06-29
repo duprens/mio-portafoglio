@@ -53,17 +53,26 @@ def candele_fig(dati_c, costo_totale_pmc):
 
 
 def performance_fig(perf):
-    """Linea continua del rendimento time-weighted (%). Niente gradini da
-    versamenti/prelievi: mostra solo l'andamento degli investimenti."""
-    fin = float(perf["Perf"].iloc[-1]) if len(perf) else 0.0
-    colore = "#00c853" if fin >= 0 else "#ff4b4b"
-    fill_rgba = "rgba(0, 200, 83, 0.12)" if fin >= 0 else "rgba(255, 75, 75, 0.12)"
+    """Linea continua del rendimento (%). Verde sopra lo zero, rossa sotto.
+    Vale sia per il TWRR sia per il MWRR: cambia solo la serie passata."""
+    x = perf.index
+    y = perf["Perf"].astype(float)
+    y_pos = y.where(y >= 0, 0.0)   # parte positiva (verde), 0 dove negativa
+    y_neg = y.where(y <= 0, 0.0)   # parte negativa (rossa), 0 dove positiva
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=perf.index, y=perf["Perf"], mode="lines",
-        line=dict(color=colore, width=2), fill="tozeroy", fillcolor=fill_rgba,
-        hovertemplate="%{x|%d %b %Y}<br>Performance: %{y:+.2f}%<extra></extra>",
-        showlegend=False,
+        x=x, y=y_pos, mode="lines", line=dict(color="#00c853", width=2),
+        fill="tozeroy", fillcolor="rgba(0, 200, 83, 0.12)", hoverinfo="skip", showlegend=False,
+    ))
+    fig.add_trace(go.Scatter(
+        x=x, y=y_neg, mode="lines", line=dict(color="#ff4b4b", width=2),
+        fill="tozeroy", fillcolor="rgba(255, 75, 75, 0.12)", hoverinfo="skip", showlegend=False,
+    ))
+    # Traccia trasparente solo per l'hover: mostra il valore reale a 2 decimali.
+    fig.add_trace(go.Scatter(
+        x=x, y=y, mode="lines", line=dict(color="rgba(0,0,0,0)", width=0),
+        hovertemplate="%{x|%d %b %Y}<br>Performance: %{y:+.2f}%<extra></extra>", showlegend=False,
     ))
     fig.add_hline(y=0, line=dict(color="rgba(150, 150, 150, 0.5)", width=1, dash="dash"))
     fig.update_yaxes(autorange=True, fixedrange=False, ticksuffix="%")

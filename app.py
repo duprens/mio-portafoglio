@@ -6,7 +6,7 @@ from styles import apply as apply_styles
 from security import assert_encryption_key
 from auth import gate, logout_button
 import data # Import data module
-from charts import colora, candele_fig, performance_fig, pie_fig, planner_fig, format_legend_table, COLORI_TORTA # Import COLORI_TORTA
+from charts import colora, candele_fig, pie_fig, planner_fig, format_legend_table, COLORI_TORTA # Import COLORI_TORTA
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -21,27 +21,22 @@ if not user_sheet_link:
     st.stop()
 
 
+def salva():
+    data.save_portfolio(user_sheet_link, st.session_state.clienti_database, st.session_state.date_inizio_clienti)
+
+
 # ---- Stato iniziale ----
-# Fonte unica: scheda "Movimenti". Holdings, PMC, date inizio ed elenco clienti
-# sono tutti derivati dalle operazioni. Il foglio "Portafogli" non viene più letto.
 if "db_caricato" not in st.session_state:
-    c_db, d_db, ops_db = data.load_movimenti(user_sheet_link)
+    c_db, d_db = data.load_portfolio(user_sheet_link)
     st.session_state.clienti_database, st.session_state.date_inizio_clienti = c_db, d_db
-    st.session_state.operazioni_database = ops_db
     st.session_state.db_caricato = True
 
 if "cliente_selezionato" not in st.session_state:
     lista_cl = list(st.session_state.clienti_database.keys())
     st.session_state.cliente_selezionato = lista_cl[0] if lista_cl else ""
 
-# Se il cliente selezionato non esiste più (es. rimosso da Movimenti dopo un
-# refresh), reimposta sul primo disponibile per evitare KeyError.
-if st.session_state.cliente_selezionato and st.session_state.cliente_selezionato not in st.session_state.clienti_database:
-    rimasti = list(st.session_state.clienti_database.keys())
-    st.session_state.cliente_selezionato = rimasti[0] if rimasti else ""
-
-if "metodo_scelta" not in st.session_state:
-    st.session_state.metodo_scelta, st.session_state.metodo_control = "T", "T"
+if "timeframe_scelta" not in st.session_state:
+    st.session_state.timeframe_scelta, st.session_state.timeframe_control = "D", "D"
 
 # ---- Prezzi ----
 tutti_i_tickers = set()
@@ -66,11 +61,12 @@ for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.spl
     # Recupero logica freccia (variazione seduta precedente) da app.rtf
     var_p_prev_session = 0.0
     freccia = ""
+    client_portfolio = st.session_state.clienti_database[nome]
     client_start_date = st.session_state.date_inizio_clienti.get(nome, "2024-01-01")
-    ops_cliente = st.session_state.operazioni_database.get(nome)
 
-    if ops_cliente is not None and len(ops_cliente) > 0:
-        dati_sidebar = data.fetch_candele_storico(ops_cliente, client_start_date, "1d")
+    if client_portfolio:
+        tickers_for_client = list(set(i["Ticker"] for i in client_portfolio))
+        dati_sidebar = data.fetch_candele(tickers_for_client, client_portfolio, client_start_date, "1d")
         if dati_sidebar is not None and len(dati_sidebar) >= 2:
             current_close = dati_sidebar["Close"].iloc[-1]
             previous_close = dati_sidebar["Close"].iloc[-2]
@@ -85,11 +81,29 @@ for nome in sorted(st.session_state.clienti_database.keys(), key=lambda x: x.spl
         width="stretch",
         type="primary" if st.session_state.cliente_selezionato == nome else "secondary",
     ):
-        st.session_state.cliente_selezionato, st.session_state.metodo_scelta, st.session_state.metodo_control = nome, "T", "T"
+        st.session_state.cliente_selezionato, st.session_state.timeframe_scelta, st.session_state.timeframe_control = nome, "D", "D"
         st.rerun()
 
-# Clienti, strumenti e operazioni si gestiscono direttamente dalla scheda
-# "Movimenti" del Google Sheet (fonte unica). L'app è in sola lettura.
+st.sidebar.divider()
+with st.sidebar.expander("➕ Nuovo Cliente"):
+    nc_nome, nc_data = st.text_input("Nome Cliente"), st.date_input("Data Inizio Portafoglio")
+    if st.button("Crea Cliente", width="stretch", type="primary") and nc_nome:
+        st.session_state.clienti_database[nc_nome] = []
+        st.session_state.date_inizio_clienti[nc_nome] = nc_data.strftime("%Y-%m-%d")
+        salva()
+        st.session_state.cliente_selezionato, st.session_state.timeframe_scelta, st.session_state.timeframe_control = nc_nome, "D", "D"
+        st.rerun()
+
+if st.session_state.cliente_selezionato in st.session_state.clienti_database:
+    with st.sidebar.expander("🗑️ Elimina Cliente"):
+        st.markdown(f"Rimuovere **{st.session_state.cliente_selezionato}**?")
+        if st.button("Elimina", width="stretch", type="primary"):
+            del st.session_state.clienti_database[st.session_state.cliente_selezionato]
+            salva()
+            rimanenti = list(st.session_state.clienti_database.keys())
+            st.session_state.cliente_selezionato = rimanenti[0] if rimanenti else ""
+            st.session_state.timeframe_scelta, st.session_state.timeframe_control = "D", "D"
+            st.rerun()
 
 # ==========================================
 # DASHBOARD
@@ -104,10 +118,8 @@ if st.session_state.cliente_selezionato:
         st.title(f"📈 {cliente}")
     with col_b:
         st.write("")
-        if st.button("Aggiorna Dati", width="stretch"):
-            # Ricarica sia i prezzi sia i dati dalla scheda Movimenti.
+        if st.button("Aggiorna Prezzi", width="stretch"):
             st.cache_data.clear()
-            st.session_state.pop("db_caricato", None)
             st.rerun()
 
     costo_totale_pmc, totale_controvalore = 0, 0
@@ -137,28 +149,24 @@ if st.session_state.cliente_selezionato:
 
     st.divider()
 
-    # Pillola T (Time-Weighted) / M (Money-Weighted)
-    metodo = st.segmented_control(
-        label="",
-        options=["T", "M"],
-        default=st.session_state.metodo_scelta,
-        key="metodo_control",
-        help="T = time-weighted (depura versamenti/prelievi) · M = money-weighted (P&L sul capitale investito)",
+    # Pillola D / W
+    timeframe = st.segmented_control(
+        label="", 
+        options=["D", "W"], 
+        default=st.session_state.timeframe_scelta,
+        key="timeframe_control"
     )
-    if metodo and metodo != st.session_state.metodo_scelta:
-        st.session_state.metodo_scelta = metodo
+    if timeframe != st.session_state.timeframe_scelta:
+        st.session_state.timeframe_scelta = timeframe
         st.rerun()
 
     if not df.empty:
-        ops_cliente = st.session_state.operazioni_database.get(cliente)
-        if st.session_state.metodo_scelta == "M":
-            perf = data.fetch_mwrr(ops_cliente, d_inizio, "1d")
-        else:
-            perf = data.fetch_performance(ops_cliente, d_inizio, "1d")
-        if perf is not None:
-            fig_perf = performance_fig(perf)
-            fig_perf.update_layout(yaxis_title=None)
-            st.plotly_chart(fig_perf, width="stretch")
+        tf_da_usare = "1d" if st.session_state.timeframe_scelta == "D" else "1wk"
+        dati_c = data.fetch_candele(list(set(i["Ticker"] for i in ptf_c)), ptf_c, d_inizio, tf_da_usare)
+        if dati_c is not None:
+            fig_candele = candele_fig(dati_c, costo_totale_pmc)
+            fig_candele.update_layout(yaxis_title=None)
+            st.plotly_chart(fig_candele, width="stretch")
 
     st.divider()
 
@@ -182,26 +190,73 @@ if st.session_state.cliente_selezionato:
         colonne_view = ["Asset", "Strumento", "PMC", "Ultimo Prezzo", "Quantità", "Ribilanc. (Pz)", "Var. €", "Var. %", "Controvalore", "Peso %"]
         df_for_editor = df_sorted[colonne_view].copy()
 
-        def _fmt_qty(v):
-            try:
-                v = float(v)
-            except (TypeError, ValueError):
-                return v
-            return f"{v:.0f}" if v.is_integer() else f"{v:.4f}".rstrip("0").rstrip(".")
-
-        fmt_map = {c: "{:.2f}" for c in ["PMC", "Ultimo Prezzo", "Var. €", "Var. %", "Controvalore", "Peso %"]}
-        fmt_map["Quantità"] = _fmt_qty
-
         try:
-            styled_df = df_for_editor.style.map(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format(fmt_map)
+            styled_df = df_for_editor.style.map(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format(
+                "{:.2f}", subset=["PMC", "Ultimo Prezzo", "Var. €", "Var. %", "Controvalore", "Peso %"]
+            )
         except AttributeError:
-            styled_df = df_for_editor.style.applymap(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format(fmt_map)
+            styled_df = df_for_editor.style.applymap(colora, subset=["Var. %", "Var. €", "Ribilanc. (Pz)"]).format(
+                "{:.2f}", subset=["PMC", "Ultimo Prezzo", "Var. €", "Var. %", "Controvalore", "Peso %"]
+            )
 
-        # Tabella in sola lettura: la fonte è la scheda "Movimenti".
-        st.data_editor(
-            styled_df, width="stretch", hide_index=True, num_rows="fixed", disabled=True,
+        edited_df = st.data_editor(
+            styled_df, width="stretch", hide_index=True, num_rows="fixed",
+            disabled=["Ultimo Prezzo", "Ribilanc. (Pz)", "Var. €", "Var. %", "Controvalore", "Peso %"],
             height=(len(df_sorted) + 1) * 35 + 10,
         )
+
+        changed = False
+        for i in range(len(df_sorted)):
+            try:
+                new_q = float(str(edited_df.loc[i, "Quantità"]).replace(",", ""))
+                new_p = float(str(edited_df.loc[i, "PMC"]).replace(",", ""))
+                new_a = str(edited_df.loc[i, "Asset"])
+                new_s = str(edited_df.loc[i, "Strumento"])
+
+                orig_q = float(df_sorted.loc[i, "Quantità"])
+                orig_p = float(df_sorted.loc[i, "PMC"])
+                orig_a = str(df_sorted.loc[i, "Asset"])
+                orig_s = str(df_sorted.loc[i, "Strumento"])
+
+                if new_q != orig_q or new_p != orig_p or new_a != orig_a or new_s != orig_s:
+                    changed = True
+                    ticker = df_sorted.loc[i, "Ticker"]
+                    if new_q <= 0:
+                        st.session_state.clienti_database[cliente] = [
+                            x for x in st.session_state.clienti_database[cliente] if x["Ticker"] != ticker
+                        ]
+                    else:
+                        for item in st.session_state.clienti_database[cliente]:
+                            if item["Ticker"] == ticker:
+                                item.update({"Quantità": new_q, "PMC": new_p, "Asset": new_a, "Strumento": new_s})
+                                break
+            except Exception:
+                continue
+        if changed:
+            salva()
+            st.rerun()
+
+    if not df.empty or len(ptf_c) == 0:
+        with st.expander("➕ Nuovo Strumento"):
+            c_t, c_n, c_q = st.columns(3)
+            new_t = c_t.text_input("Ticker")
+            new_n = c_n.text_input("Strumento")
+            new_q = c_q.number_input("Quantità", min_value=0.0, step=1.0, format="%.4f")
+            c_p, c_as, c_ar, c_v = st.columns(4)
+            new_p = c_p.number_input("PMC", min_value=0.0, step=1.0, format="%.2f")
+            new_as = c_as.selectbox("Asset Class", ["Azionario", "Obbligazionario", "Monetario", "Commodity", "Crypto", "Bilanciato", "Immobiliare", "Altro"])
+            new_ar = c_ar.selectbox("Area Geografica", ["USA", "Europa", "Emergenti", "Globale", "Pacifico", "Altro"])
+            new_v = c_v.selectbox("Valuta", ["EUR", "USD", "Altro"])
+
+            if st.button("Aggiungi al Portafoglio", type="secondary", width="stretch") and new_t and new_q > 0:
+                st.session_state.clienti_database[cliente].append({
+                    "Strumento": new_n if new_n else new_t,
+                    "Ticker": new_t.upper(),
+                    "Quantità": new_q, "PMC": new_p,
+                    "Asset": new_as, "Area": new_ar, "Valuta": new_v,
+                })
+                salva()
+                st.rerun()
 
     st.divider()
 
